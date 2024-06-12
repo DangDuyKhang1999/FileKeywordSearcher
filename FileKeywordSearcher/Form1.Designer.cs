@@ -35,33 +35,34 @@ namespace FileKeywordSearcher
             txtBrowser = new TextBox();
             tableLayoutPanel = new TableLayoutPanel();
             btnStartSearch = new Button();
+            txtKeyWord = new TextBox();
             SuspendLayout();
             // 
             // btnBrowser
             // 
-            btnBrowser.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnBrowser.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             btnBrowser.BackColor = Color.FromArgb(137, 190, 179);
             btnBrowser.FlatAppearance.BorderColor = Color.FromArgb(137, 190, 179);
             btnBrowser.FlatStyle = FlatStyle.Flat;
             btnBrowser.ForeColor = Color.Black;
-            btnBrowser.Location = new Point(694, 3);
+            btnBrowser.Location = new Point(589, 416);
             btnBrowser.Name = "btnBrowser";
-            btnBrowser.Size = new Size(103, 40);
+            btnBrowser.Size = new Size(103, 29);
             btnBrowser.TabIndex = 1;
             btnBrowser.Text = "Browser";
             btnBrowser.UseVisualStyleBackColor = false;
-            btnBrowser.Click += BtnBrowser_Click;
+            btnBrowser.Click += btnBrowser_Click;
             // 
             // txtBrowser
             // 
-            txtBrowser.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            txtBrowser.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             txtBrowser.BackColor = Color.FromArgb(190, 217, 217);
             txtBrowser.BorderStyle = BorderStyle.None;
             txtBrowser.ForeColor = Color.Red;
-            txtBrowser.Location = new Point(3, 3);
+            txtBrowser.Location = new Point(3, 416);
             txtBrowser.Multiline = true;
             txtBrowser.Name = "txtBrowser";
-            txtBrowser.Size = new Size(689, 40);
+            txtBrowser.Size = new Size(584, 29);
             txtBrowser.TabIndex = 2;
             txtBrowser.Text = "Please select the directory for inspection!!!";
             txtBrowser.Enter += txtBrowser_Enter;
@@ -69,14 +70,14 @@ namespace FileKeywordSearcher
             // 
             // tableLayoutPanel
             // 
-            tableLayoutPanel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            tableLayoutPanel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             tableLayoutPanel.AutoScroll = true;
             tableLayoutPanel.BackColor = Color.FromArgb(190, 217, 217);
             tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
             tableLayoutPanel.ForeColor = Color.FromArgb(161, 204, 209);
-            tableLayoutPanel.Location = new Point(3, 45);
+            tableLayoutPanel.Location = new Point(3, 3);
             tableLayoutPanel.Name = "tableLayoutPanel";
-            tableLayoutPanel.Size = new Size(689, 400);
+            tableLayoutPanel.Size = new Size(794, 380);
             tableLayoutPanel.TabIndex = 6;
             // 
             // btnStartSearch
@@ -95,12 +96,28 @@ namespace FileKeywordSearcher
             btnStartSearch.UseVisualStyleBackColor = false;
             btnStartSearch.Click += btnStartSearch_Click_1;
             // 
+            // txtKeyWord
+            // 
+            txtKeyWord.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            txtKeyWord.BackColor = Color.FromArgb(190, 217, 217);
+            txtKeyWord.BorderStyle = BorderStyle.None;
+            txtKeyWord.ForeColor = Color.Red;
+            txtKeyWord.Location = new Point(3, 385);
+            txtKeyWord.Multiline = true;
+            txtKeyWord.Name = "txtKeyWord";
+            txtKeyWord.Size = new Size(689, 29);
+            txtKeyWord.TabIndex = 7;
+            txtKeyWord.Text = "Enter the search keyword!!!";
+            txtKeyWord.Enter += txtKeyWord_Enter;
+            txtKeyWord.Leave += txtKeyWord_Leave;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(238, 245, 255);
             ClientSize = new Size(800, 449);
+            Controls.Add(txtKeyWord);
             Controls.Add(btnStartSearch);
             Controls.Add(tableLayoutPanel);
             Controls.Add(txtBrowser);
@@ -118,5 +135,6 @@ namespace FileKeywordSearcher
         //private RichTextBox rtxtResult;
         private TableLayoutPanel tableLayoutPanel;
         private Button btnStartSearch;
+        private TextBox txtKeyWord;
     }
 }

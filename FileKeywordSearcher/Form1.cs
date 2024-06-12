@@ -12,53 +12,14 @@ namespace FileKeywordSearcher
         FileKeywordSearcher fileKeywordSearcher = null!;
         public Form1()
         {
-            // Width = 700
-            // Height = 338
             InitializeComponent();
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            this.StartPosition = FormStartPosition.CenterScreen;
+            StartPosition = FormStartPosition.CenterScreen;
             Resize += Form1_SizeChanged;
         }
 
-        private void Form1_SizeChanged(object? sender, EventArgs e)
-        {
-            int newWidth = btnBrowser.Location.X - 6;
-            int newHeight = this.ClientRectangle.Height - tableLayoutPanel.Location.Y - 2;
 
-            if (newWidth > 0 && newHeight > 0)
-            {
-                txtBrowser.Width = newWidth;
-               // txtBrowser.Height = btnBrowser.Height;
-
-                tableLayoutPanel.Width = newWidth;
-                tableLayoutPanel.Height = newHeight;
-
-
-                foreach (Control control in tableLayoutPanel.Controls)
-                {
-                    if (control is Panel panel)
-                    {
-                        panel.Width = tableLayoutPanel.ClientSize.Width;
-
-                        RichTextBox rtb = panel.Controls.OfType<RichTextBox>().FirstOrDefault() ?? new RichTextBox();
-                        Button button = panel.Controls.OfType<Button>().FirstOrDefault() ?? new Button();
-
-                        if (rtb != null && button != null)
-                        {
-                            int newRtbWidth = panel.Width - button.Width - 12;
-
-                            if (newRtbWidth > 0)
-                            {
-                                rtb.Width = newRtbWidth;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-
-        private void BtnBrowser_Click(object sender, EventArgs e)
+        private void btnBrowser_Click(object sender, EventArgs e)
         {
             txtBrowser.Text = String.Empty;
             txtBrowser.ForeColor = Color.Black;
@@ -90,29 +51,11 @@ namespace FileKeywordSearcher
                 return;
             }
 
-            fileKeywordSearcher = new FileKeywordSearcher(txtBrowser);
+            fileKeywordSearcher = new FileKeywordSearcher(txtBrowser.Text, txtKeyWord.Text);
 
             if (!InitializeTableLayoutResult())
             {
                 //MessageBox.Show("Not find {txtBrowser.text} int", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-        }
-
-        private void txtBrowser_Leave(object sender, EventArgs e)
-        {
-            if (txtBrowser.Text == String.Empty)
-            {
-                txtBrowser.Text = "Please select the directory for inspection!!!";
-                txtBrowser.ForeColor = Color.Red;
-            }
-        }
-
-        private void txtBrowser_Enter(object sender, EventArgs e)
-        {
-            if (txtBrowser.Text == "Please select the directory for inspection!!!")
-            {
-                txtBrowser.Text = String.Empty;
-                txtBrowser.ForeColor = Color.Black;
             }
         }
 
@@ -124,7 +67,7 @@ namespace FileKeywordSearcher
             }
 
             bool bIsResult = false;
-            List<FileItem> fileItems = fileKeywordSearcher.GetFileItems(); 
+            List<FileItem> fileItems = fileKeywordSearcher.GetFileItems();
             int i = 0;
             tableLayoutPanel.RowStyles.Clear();
             tableLayoutPanel.Controls.Clear();
@@ -247,5 +190,82 @@ namespace FileKeywordSearcher
             }
 
         }
+
+        private void UpdateControlSizesAndLocations()
+        {
+            txtBrowser.Width = ClientRectangle.Width - (ClientRectangle.Width - btnBrowser.Location.X + 5);
+            txtBrowser.Height = btnBrowser.Height;
+
+            Point newLocation = txtBrowser.Location;
+            newLocation.Y = btnBrowser.Location.Y;
+            txtBrowser.Location = newLocation;
+
+            tableLayoutPanel.Width = ClientRectangle.Width;
+            tableLayoutPanel.Height = ClientRectangle.Height - (ClientRectangle.Height - btnStartSearch.Location.Y - btnStartSearch.Height - 6);
+
+            foreach (Control control in tableLayoutPanel.Controls)
+            {
+                if (control is Panel panel)
+                {
+                    panel.Width = tableLayoutPanel.ClientSize.Width;
+
+                    RichTextBox rtb = panel.Controls.OfType<RichTextBox>().FirstOrDefault() ?? new RichTextBox();
+                    Button button = panel.Controls.OfType<Button>().FirstOrDefault() ?? new Button();
+
+                    if (rtb != null && button != null)
+                    {
+                        int newRtbWidth = panel.Width - button.Width - 12;
+
+                        if (newRtbWidth > 0)
+                        {
+                            rtb.Width = newRtbWidth;
+                        }
+                    }
+                }
+            }
+        }
+
+        private void txtBrowser_Leave(object sender, EventArgs e)
+        {
+            if (txtBrowser.Text == String.Empty)
+            {
+                txtBrowser.Text = "Please select the directory for inspection!!!";
+                txtBrowser.ForeColor = Color.Red;
+            }
+        }
+
+        private void txtBrowser_Enter(object sender, EventArgs e)
+        {
+            if (txtBrowser.Text == "Please select the directory for inspection!!!")
+            {
+                txtBrowser.Text = String.Empty;
+                txtBrowser.ForeColor = Color.Black;
+            }
+        }
+
+        private void txtKeyWord_Enter(object sender, EventArgs e)
+        {
+            if (txtKeyWord.Text == "Enter the search keyword!!!")
+            {
+                txtKeyWord.Text = String.Empty;
+                txtKeyWord.ForeColor = Color.Black;
+            }
+        }
+
+        private void txtKeyWord_Leave(object sender, EventArgs e)
+        {
+            if (txtKeyWord.Text == String.Empty)
+            {
+                txtKeyWord.Text = "Enter the search keyword!!!";
+                txtKeyWord.ForeColor = Color.Red;
+            }
+        }
+
+        private void Form1_SizeChanged(object? sender, EventArgs e)
+        {
+            UpdateControlSizesAndLocations();
+        }
+
+
     }
 }

@@ -5,16 +5,16 @@ namespace FileKeywordSearcher
 {
     internal class FileKeywordSearcher
     {
-        public TextBox TxtBrowser { get; set; }
+        public string m_strBrowser { get; set; }
         public string m_strKeyWord { get; set; }
 
         private List<FileItem> m_fileItems = new List<FileItem>();
 
-        public FileKeywordSearcher(TextBox txtBrowser)
+        public FileKeywordSearcher(string strBrowser, string strKeyWord)
         {
-            m_strKeyWord = "khang";
-            TxtBrowser = txtBrowser;
-            HasCodeFiles(TxtBrowser.Text);
+            m_strBrowser = strBrowser;
+            m_strKeyWord = strKeyWord;
+            HasCodeFiles(m_strBrowser);
         }
 
         public List<FileItem> GetFileItems()
@@ -50,7 +50,11 @@ namespace FileKeywordSearcher
                                              .Concat(Directory.GetFiles(directoryPath, "*.txt"))   //text
                                              )
             {
-                m_fileItems.Add(CheckFileForKeyword(file, m_strKeyWord));
+                if (CheckFileForKeyword(file))
+                { 
+                    FileItem fileItem = new FileItem(file, true);
+                    m_fileItems.Add(fileItem);
+                }
             }
 
             // Recursively check all subdirectories
@@ -62,19 +66,19 @@ namespace FileKeywordSearcher
             return iResult;
         }
 
-        private FileItem CheckFileForKeyword(string filePath, string keyword)
+        private bool CheckFileForKeyword(string filePath)
         {
-            FileItem fileItem = new FileItem(filePath, false);
+            bool bHasKeyWord = false;
             try
             {
                 string content = File.ReadAllText(filePath);
-                if (content.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
+                if (content.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    fileItem.m_bHasKeyWord = true;
+                    bHasKeyWord = true;
                 }
                 else
                 {
-                    fileItem.m_bHasKeyWord = false;
+                    bHasKeyWord = false;
                 }
             }
             catch (Exception ex)
@@ -82,7 +86,7 @@ namespace FileKeywordSearcher
                 // Handle exceptions such as file not found, access denied, etc.
                 MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
             }
-            return fileItem;
+            return bHasKeyWord;
         }
 
     }
