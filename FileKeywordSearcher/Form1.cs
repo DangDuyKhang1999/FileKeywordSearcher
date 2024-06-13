@@ -11,8 +11,9 @@ namespace FileKeywordSearcher
     {
         public enum FileExtension
         {
+            Normal,
+            CSV,
             Excel,
-            Normal
         }
 
         FileKeywordSearcher fileKeywordSearcher = null!;
@@ -23,7 +24,6 @@ namespace FileKeywordSearcher
             StartPosition = FormStartPosition.CenterScreen;
             Resize += Form1_SizeChanged;
         }
-
 
         private void btnBrowser_Click(object sender, EventArgs e)
         {
@@ -102,7 +102,15 @@ namespace FileKeywordSearcher
                     };
 
                     //RichTextBox
-                    string linecode = $"   Line: {fileItem.m_strLineMapping}";
+                    string linecode = "";
+                    if (fileItem.m_fileExtension == FileExtension.Normal)
+                    {
+                        linecode = $"   Line: {fileItem.m_strLineMapping}";
+                    }
+                    else if (fileItem.m_fileExtension == FileExtension.CSV)
+                    {
+                        linecode = $"   Cell: {fileItem.m_strLineMapping}";
+                    }
 
                     RichTextBox rtItem = new()
                     {
@@ -114,14 +122,14 @@ namespace FileKeywordSearcher
                     Font fontPath = new(rtItem.Font, FontStyle.Bold);
                     Font fontLine = new(rtItem.Font, FontStyle.Italic);
 
-                    // Sử dụng fontPath cho fileItem.m_strFileName
+                    // fontLine for path
                     rtItem.SelectionStart = rtItem.TextLength;
                     rtItem.SelectionLength = 0;
                     rtItem.SelectionFont = fontPath;
                     rtItem.SelectionColor = Color.FromArgb(162, 87, 114);
                     rtItem.SelectedText = fileItem.m_strFileName + Environment.NewLine;
 
-                    // Sử dụng fontLine cho linecode
+                    // fontLine for line
                     rtItem.SelectionStart = rtItem.TextLength;
                     rtItem.SelectionLength = 0;
                     rtItem.SelectionFont = fontLine;

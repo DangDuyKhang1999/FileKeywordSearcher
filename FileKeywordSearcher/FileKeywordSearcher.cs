@@ -14,7 +14,7 @@ namespace FileKeywordSearcher
         {
             m_strBrowser = strBrowser;
             m_strKeyWord = strKeyWord;
-            HasCodeFiles(m_strBrowser);
+            HasKeyWord(m_strBrowser);
         }
 
         public List<FileItem> GetFileItems()
@@ -22,45 +22,39 @@ namespace FileKeywordSearcher
             return m_fileItems;
         }
 
-        public bool HasCodeFiles(string directoryPath)
+        public bool HasKeyWord(string directoryPath)
         {
             bool iResult = false;
             string strLineMapping = "";
-            // Check source files in the current directory
-            foreach (var file in Directory.GetFiles(directoryPath, "*.h") //Header C++
-                                             .Concat(Directory.GetFiles(directoryPath, "*.cpp"))   // C++
-                                             .Concat(Directory.GetFiles(directoryPath, "*.c"))     // C
-                                             .Concat(Directory.GetFiles(directoryPath, "*.cs"))    //C#
-                                             .Concat(Directory.GetFiles(directoryPath, "*.java"))  //Java
-                                             .Concat(Directory.GetFiles(directoryPath, "*.py"))    // Python
-                                             .Concat(Directory.GetFiles(directoryPath, "*.rb"))    // Ruby
-                                             .Concat(Directory.GetFiles(directoryPath, "*.php"))   // PHP
-                                             .Concat(Directory.GetFiles(directoryPath, "*.swift")) // Swift
-                                             .Concat(Directory.GetFiles(directoryPath, "*.go"))    // Go
-                                             .Concat(Directory.GetFiles(directoryPath, "*.ts"))    // TypeScript
-                                             .Concat(Directory.GetFiles(directoryPath, "*.kt"))    // Kotlin
-                                             .Concat(Directory.GetFiles(directoryPath, "*.scala")) // Scala
-                                             .Concat(Directory.GetFiles(directoryPath, "*.pl"))    // Perl
-                                             .Concat(Directory.GetFiles(directoryPath, "*.lua"))   // Lua
-                                             .Concat(Directory.GetFiles(directoryPath, "*.dart"))  // Dart (Flutter)
-                                             .Concat(Directory.GetFiles(directoryPath, "*.js"))    // JavaScript (React Native)
-                                             .Concat(Directory.GetFiles(directoryPath, "*.jsx"))   // JSX (React Native)
-                                             .Concat(Directory.GetFiles(directoryPath, "*.m"))     //MATLAB
-                                             .Concat(Directory.GetFiles(directoryPath, "*.csv"))   //CSV
-                                             .Concat(Directory.GetFiles(directoryPath, "*.txt"))   //text
-                                             )
+
+            // Check all files in the current directory
+            foreach (var file in Directory.GetFiles(directoryPath, "*"))
             {
-                if (CheckFileForKeyword(file, ref strLineMapping))
+                FileExtension fileExtension = GetFileExtension(file);
+                if (fileExtension == FileExtension.Normal)
                 {
-                    FileItem fileItem = new FileItem(file, true, strLineMapping);
-                    m_fileItems.Add(fileItem);
+                    if (CheckFileForKeyword(file, ref strLineMapping))
+                    {
+                        FileItem fileItem = new FileItem(file, strLineMapping, fileExtension);
+                        m_fileItems.Add(fileItem);
+                        iResult = true; // If at least one file is found, set result to true
+                    }
+                }
+                else if (fileExtension == FileExtension.CSV)
+                {
+                    if (CheckCSVForKeyword(file, ref strLineMapping))
+                    {
+                        FileItem fileItem = new FileItem(file, strLineMapping, fileExtension);
+                        m_fileItems.Add(fileItem);
+                        iResult = true; // If at least one file is found, set result to true
+                    }
                 }
             }
 
             // Recursively check all subdirectories
             foreach (var subDirectory in Directory.GetDirectories(directoryPath))
             {
-                iResult |= HasCodeFiles(subDirectory);
+                iResult |= HasKeyWord(subDirectory);
             }
 
             return iResult;
@@ -109,6 +103,79 @@ namespace FileKeywordSearcher
             return bHasKeyWord;
         }
 
+        private bool CheckCSVForKeyword(string filePath, ref string strCellMapping)
+        {
+            bool bHasKeyWord = false;
+            List<string> keywordCells = new List<string>();
 
+            try
+            {
+                // Read all lines from the CSV file
+                string[] lines = File.ReadAllLines(filePath);
+
+                // Loop through each line in the file
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    // Split the line into cells (assuming comma as delimiter)
+                    string[] cells = lines[i].Split(',');
+
+                    // Loop through each cell in the line
+                    for (int j = 0; j < cells.Length; j++)
+                    {
+                        // Check if the current cell contains the keyword (case insensitive)
+                        if (cells[j].IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            // If the keyword is found in the cell, add the cell position to the list
+                            string cellPosition = $"{GetExcelColumnName(j + 1)}{i + 1}";
+                            keywordCells.Add(cellPosition);
+                            bHasKeyWord = true;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions such as file not found, access denied, etc.
+                MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
+            }
+
+            // Check if any keyword was found in the file
+            if (bHasKeyWord)
+            {
+                // If keywords were found, convert the list of cell positions to a string
+                strCellMapping = string.Join(", ", keywordCells);
+            }
+            else
+            {
+                // If no keyword was found, set strCellMapping to an empty string
+                strCellMapping = "";
+            }
+
+            return bHasKeyWord;
+        }
+
+        private string GetExcelColumnName(int columnNumber)
+        {
+            string columnName = String.Empty;
+            while (columnNumber > 0)
+            {
+                int modulo = (columnNumber - 1) % 26;
+                columnName = Convert.ToChar(65 + modulo) + columnName;
+                columnNumber = (columnNumber - modulo) / 26;
+            }
+            return columnName;
+        }
+
+        private FileExtension GetFileExtension(string fileName)
+        {
+            string extension = Path.GetExtension(fileName).ToLowerInvariant();
+            return extension switch
+            {
+                ".xls" => FileExtension.Excel,
+                ".xlsx" => FileExtension.Excel,
+                ".csv" => FileExtension.CSV,
+                _ => FileExtension.Normal
+            };
+        }
     }
 }

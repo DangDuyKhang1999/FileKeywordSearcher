@@ -8,12 +8,13 @@ namespace FileKeywordSearcher
         public string m_strFileName { get; set; }
         public bool m_bHasKeyWord { get; set; }
         public string m_strLineMapping { get; set; }
+        public FileExtension m_fileExtension { get; set; }
 
-        public FileItem(string fileName, bool hasKeyword = false, string strLineMapping = "")
+        public FileItem(string fileName, string strLineMapping = "", FileExtension fileExtension = default)
         {
             m_strFileName = fileName;
-            m_bHasKeyWord = hasKeyword;
             m_strLineMapping = strLineMapping;
+            m_fileExtension = fileExtension;
         }
     }
 }
