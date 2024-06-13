@@ -25,7 +25,7 @@ namespace FileKeywordSearcher
         public bool HasCodeFiles(string directoryPath)
         {
             bool iResult = false;
-
+            string strLineMapping = "";
             // Check source files in the current directory
             foreach (var file in Directory.GetFiles(directoryPath, "*.h") //Header C++
                                              .Concat(Directory.GetFiles(directoryPath, "*.cpp"))   // C++
@@ -50,9 +50,9 @@ namespace FileKeywordSearcher
                                              .Concat(Directory.GetFiles(directoryPath, "*.txt"))   //text
                                              )
             {
-                if (CheckFileForKeyword(file))
-                { 
-                    FileItem fileItem = new FileItem(file, true);
+                if (CheckFileForKeyword(file, ref strLineMapping))
+                {
+                    FileItem fileItem = new FileItem(file, true, strLineMapping);
                     m_fileItems.Add(fileItem);
                 }
             }
@@ -66,19 +66,26 @@ namespace FileKeywordSearcher
             return iResult;
         }
 
-        private bool CheckFileForKeyword(string filePath)
+        private bool CheckFileForKeyword(string filePath, ref string strLineMapping)
         {
             bool bHasKeyWord = false;
+            List<int> keywordLines = new List<int>();
+
             try
             {
-                string content = File.ReadAllText(filePath);
-                if (content.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                // Read all lines from the file
+                string[] lines = File.ReadAllLines(filePath);
+
+                // Loop through each line in the file
+                for (int i = 0; i < lines.Length; i++)
                 {
-                    bHasKeyWord = true;
-                }
-                else
-                {
-                    bHasKeyWord = false;
+                    // Check if the current line contains the keyword (case insensitive)
+                    if (lines[i].IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        // If the keyword is found in the line, add the line number to the list
+                        keywordLines.Add(i + 1); // Add 1 because line numbers start from 1
+                        bHasKeyWord = true;
+                    }
                 }
             }
             catch (Exception ex)
@@ -86,8 +93,22 @@ namespace FileKeywordSearcher
                 // Handle exceptions such as file not found, access denied, etc.
                 MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
             }
+
+            // Check if any keyword was found in the file
+            if (bHasKeyWord)
+            {
+                // If keywords were found, convert the list of line numbers to a string
+                strLineMapping = string.Join(", ", keywordLines);
+            }
+            else
+            {
+                // If no keyword was found, set strLineMapping to an empty string
+                strLineMapping = "";
+            }
+
             return bHasKeyWord;
         }
+
 
     }
 }

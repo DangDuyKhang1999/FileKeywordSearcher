@@ -9,6 +9,12 @@ namespace FileKeywordSearcher
 {
     public partial class Form1 : Form
     {
+        public enum FileExtension
+        {
+            Excel,
+            Normal
+        }
+
         FileKeywordSearcher fileKeywordSearcher = null!;
         public Form1()
         {
@@ -96,7 +102,7 @@ namespace FileKeywordSearcher
                     };
 
                     //RichTextBox
-                    string linecode = $"   Check result: {fileItem.m_bHasKeyWord}";
+                    string linecode = $"   Line: {fileItem.m_strLineMapping}";
 
                     RichTextBox rtItem = new()
                     {

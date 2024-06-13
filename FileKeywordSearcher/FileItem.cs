@@ -1,4 +1,5 @@
 ﻿using System;
+using static FileKeywordSearcher.Form1;
 
 namespace FileKeywordSearcher
 {
@@ -6,11 +7,13 @@ namespace FileKeywordSearcher
     {
         public string m_strFileName { get; set; }
         public bool m_bHasKeyWord { get; set; }
+        public string m_strLineMapping { get; set; }
 
-        public FileItem(string fileName, bool hasKeyword)
+        public FileItem(string fileName, bool hasKeyword = false, string strLineMapping = "")
         {
             m_strFileName = fileName;
             m_bHasKeyWord = hasKeyword;
+            m_strLineMapping = strLineMapping;
         }
     }
 }
