@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
 
+
 namespace FileKeywordSearcher
 {
     public partial class Form1 : Form
@@ -108,6 +109,10 @@ namespace FileKeywordSearcher
                         linecode = $"   Line: {fileItem.m_strLineMapping}";
                     }
                     else if (fileItem.m_fileExtension == FileExtension.CSV)
+                    {
+                        linecode = $"   Cell: {fileItem.m_strLineMapping}";
+                    }
+                    else if (fileItem.m_fileExtension == FileExtension.Excel)
                     {
                         linecode = $"   Cell: {fileItem.m_strLineMapping}";
                     }

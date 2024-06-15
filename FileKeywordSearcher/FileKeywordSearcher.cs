@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using static FileKeywordSearcher.Form1;
+using ClosedXML.Excel;
 
 namespace FileKeywordSearcher
 {
@@ -25,11 +26,11 @@ namespace FileKeywordSearcher
         public bool HasKeyWord(string directoryPath)
         {
             bool iResult = false;
-            string strLineMapping = "";
 
             // Check all files in the current directory
             foreach (var file in Directory.GetFiles(directoryPath, "*"))
             {
+                string strLineMapping = "";
                 FileExtension fileExtension = GetFileExtension(file);
                 if (fileExtension == FileExtension.Normal)
                 {
@@ -43,6 +44,15 @@ namespace FileKeywordSearcher
                 else if (fileExtension == FileExtension.CSV)
                 {
                     if (CheckCSVForKeyword(file, ref strLineMapping))
+                    {
+                        FileItem fileItem = new FileItem(file, strLineMapping, fileExtension);
+                        m_fileItems.Add(fileItem);
+                        iResult = true; // If at least one file is found, set result to true
+                    }
+                }
+                else if (fileExtension == FileExtension.Excel)
+                {
+                    if (CheckExcelForKeyword(file, ref strLineMapping))
                     {
                         FileItem fileItem = new FileItem(file, strLineMapping, fileExtension);
                         m_fileItems.Add(fileItem);
@@ -165,7 +175,6 @@ namespace FileKeywordSearcher
             }
             return columnName;
         }
-
         private FileExtension GetFileExtension(string fileName)
         {
             string extension = Path.GetExtension(fileName).ToLowerInvariant();
@@ -176,6 +185,58 @@ namespace FileKeywordSearcher
                 ".csv" => FileExtension.CSV,
                 _ => FileExtension.Normal
             };
+        }
+
+        public bool CheckExcelForKeyword(string filePath, ref string strCellMapping)
+        {
+            bool bHasKeyWord = false;
+            List<string> keywordCells = new List<string>();
+
+            try
+            {
+                // Open the Excel workbook
+                using (var workbook = new XLWorkbook(filePath))
+                {
+                    // Loop through each worksheet in the workbook
+                    foreach (var worksheet in workbook.Worksheets)
+                    {
+                        // Loop through each row in the worksheet
+                        foreach (var row in worksheet.RowsUsed())
+                        {
+                            // Loop through each cell in the row
+                            foreach (var cell in row.CellsUsed())
+                            {
+                                // Check if the current cell contains the keyword (case insensitive)
+                                if (cell.GetString().IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                                {
+                                    // If the keyword is found in the cell, add the cell address to the list
+                                    keywordCells.Add(cell.Address.ToString());
+                                    bHasKeyWord = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions such as file not found, access denied, etc.
+                MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
+            }
+
+            // Check if any keyword was found in the file
+            if (bHasKeyWord)
+            {
+                // If keywords were found, convert the list of cell positions to a string
+                strCellMapping = string.Join(", ", keywordCells);
+            }
+            else
+            {
+                // If no keyword was found, set strCellMapping to an empty string
+                strCellMapping = "";
+            }
+
+            return bHasKeyWord;
         }
     }
 }
