@@ -48,7 +48,7 @@ namespace FileKeywordSearcher
             btnBrowser.Location = new Point(589, 416);
             btnBrowser.Name = "btnBrowser";
             btnBrowser.Size = new Size(103, 29);
-            btnBrowser.TabIndex = 1;
+            btnBrowser.TabIndex = 2;
             btnBrowser.Text = "Browser";
             btnBrowser.UseVisualStyleBackColor = false;
             btnBrowser.Click += btnBrowser_Click;
@@ -63,7 +63,7 @@ namespace FileKeywordSearcher
             txtBrowser.Multiline = true;
             txtBrowser.Name = "txtBrowser";
             txtBrowser.Size = new Size(584, 29);
-            txtBrowser.TabIndex = 2;
+            txtBrowser.TabIndex = 4;
             txtBrowser.Text = "Please select the directory for inspection!!!";
             txtBrowser.Enter += txtBrowser_Enter;
             txtBrowser.Leave += txtBrowser_Leave;
@@ -78,7 +78,7 @@ namespace FileKeywordSearcher
             tableLayoutPanel.Location = new Point(3, 3);
             tableLayoutPanel.Name = "tableLayoutPanel";
             tableLayoutPanel.Size = new Size(794, 380);
-            tableLayoutPanel.TabIndex = 6;
+            tableLayoutPanel.TabIndex = 1;
             // 
             // btnStartSearch
             // 
@@ -106,7 +106,7 @@ namespace FileKeywordSearcher
             txtKeyWord.Multiline = true;
             txtKeyWord.Name = "txtKeyWord";
             txtKeyWord.Size = new Size(689, 29);
-            txtKeyWord.TabIndex = 7;
+            txtKeyWord.TabIndex = 1;
             txtKeyWord.Text = "Enter the search keyword!!!";
             txtKeyWord.Enter += txtKeyWord_Enter;
             txtKeyWord.Leave += txtKeyWord_Leave;

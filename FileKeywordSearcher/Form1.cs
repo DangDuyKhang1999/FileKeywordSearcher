@@ -72,9 +72,27 @@ namespace FileKeywordSearcher
             {
                 return false;
             }
-
             bool bIsResult = false;
             List<FileItem> fileItems = fileKeywordSearcher.GetFileItems();
+            if (fileItems.Count == 0)
+            {
+                // Clear existing controls in the TableLayoutPanel
+                tableLayoutPanel.Controls.Clear();
+
+                // Add a Label with the message
+                Label labelNoResult = new Label();
+                labelNoResult.Text = "Keyword not found in directory!!!";
+                labelNoResult.AutoSize = true;
+                labelNoResult.Dock = DockStyle.Fill;
+                labelNoResult.TextAlign = ContentAlignment.MiddleCenter;
+
+                // Set the text color to red and make it bold
+                labelNoResult.ForeColor = Color.Red;
+                labelNoResult.Font = new Font(labelNoResult.Font, FontStyle.Bold);
+
+                tableLayoutPanel.Controls.Add(labelNoResult, 0, 0);
+                return false;
+            }
             int i = 0;
             tableLayoutPanel.RowStyles.Clear();
             tableLayoutPanel.Controls.Clear();
@@ -108,11 +126,7 @@ namespace FileKeywordSearcher
                     {
                         linecode = $"   Line: {fileItem.m_strLineMapping}";
                     }
-                    else if (fileItem.m_fileExtension == FileExtension.CSV)
-                    {
-                        linecode = $"   Cell: {fileItem.m_strLineMapping}";
-                    }
-                    else if (fileItem.m_fileExtension == FileExtension.Excel)
+                    else if (fileItem.m_fileExtension == FileExtension.CSV || fileItem.m_fileExtension == FileExtension.Excel)
                     {
                         linecode = $"   Cell: {fileItem.m_strLineMapping}";
                     }

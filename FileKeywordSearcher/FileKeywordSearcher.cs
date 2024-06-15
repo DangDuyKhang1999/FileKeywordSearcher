@@ -1,6 +1,9 @@
 ﻿using System.Text;
 using static FileKeywordSearcher.Form1;
 using ClosedXML.Excel;
+using System.Runtime.InteropServices;
+using Excel = Microsoft.Office.Interop.Excel;
+using Office = Microsoft.Office.Core;
 
 namespace FileKeywordSearcher
 {
@@ -52,12 +55,23 @@ namespace FileKeywordSearcher
                 }
                 else if (fileExtension == FileExtension.Excel)
                 {
+                    bool bExcelCell = false;
+                    bool bExcelShapes = false;
                     if (CheckExcelForKeyword(file, ref strLineMapping))
+                    {
+                        bExcelCell = true;
+                    }
+                    if (CheckExcelShapesForKeyword(file, ref strLineMapping))
+                    {
+                        bExcelShapes = true;
+                    }
+                    if (bExcelCell || bExcelShapes)
                     {
                         FileItem fileItem = new FileItem(file, strLineMapping, fileExtension);
                         m_fileItems.Add(fileItem);
                         iResult = true; // If at least one file is found, set result to true
                     }
+
                 }
             }
 
@@ -238,5 +252,116 @@ namespace FileKeywordSearcher
 
             return bHasKeyWord;
         }
+
+        public bool CheckExcelShapesForKeyword(string filePath, ref string strShapeMapping)
+        {
+            bool bHasKeyWord = false;
+            Dictionary<string, List<string>> sheetShapes = new Dictionary<string, List<string>>();
+            Excel.Application excelApp = null;
+            Excel.Workbook workbook = null;
+
+            try
+            {
+                // Open the Excel application and workbook
+                excelApp = new Excel.Application();
+                workbook = excelApp.Workbooks.Open(filePath);
+
+                // Loop through each worksheet in the workbook
+                foreach (Excel.Worksheet worksheet in workbook.Worksheets)
+                {
+                    string sheetName = worksheet.Name; // Get current sheet name
+                    bool firstShapeInSheet = true; // Flag to track if it's the first shape in the sheet
+
+                    // Initialize list for shapes in current sheet
+                    if (!sheetShapes.ContainsKey(sheetName))
+                    {
+                        sheetShapes[sheetName] = new List<string>();
+                    }
+
+                    // Loop through each shape in the worksheet
+                    foreach (Excel.Shape shape in worksheet.Shapes)
+                    {
+                        // Check if the shape contains text
+                        if (shape.TextFrame2.HasText == Office.MsoTriState.msoTrue)
+                        {
+                            var textRange = shape.TextFrame2.TextRange;
+
+                            // Check if the text contains the keyword (case insensitive)
+                            if (textRange.Text.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                // If the keyword is found in the shape, add the shape position to the list
+                                Excel.Range topLeftCell = shape.TopLeftCell;
+                                string shapePosition = $"{topLeftCell.get_Address(false, false)}";
+
+                                // Check if shapePosition already exists in current sheet's shapes
+                                if (!sheetShapes[sheetName].Contains(shapePosition))
+                                {
+                                    sheetShapes[sheetName].Add(shapePosition);
+                                    bHasKeyWord = true;
+                                }
+
+                                // After the first shape, set firstShapeInSheet to false
+                                firstShapeInSheet = false;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions such as file not found, access denied, etc.
+                MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
+            }
+            finally
+            {
+                // Clean up
+                if (workbook != null)
+                {
+                    workbook.Close(false);
+                    Marshal.ReleaseComObject(workbook);
+                }
+                if (excelApp != null)
+                {
+                    excelApp.Quit();
+                    Marshal.ReleaseComObject(excelApp);
+                }
+            }
+
+            // Construct strShapeMapping from sheetShapes dictionary
+            List<string> resultMappings = new List<string>();
+            foreach (var kvp in sheetShapes)
+            {
+                string sheetName = kvp.Key;
+                List<string> shapesInSheet = kvp.Value;
+
+                // Format sheet's shapes into a single string
+                string sheetMapping = $"sheet name \"{sheetName}\": {string.Join(", ", shapesInSheet)}";
+                resultMappings.Add(sheetMapping);
+            }
+
+            // Combine all sheet mappings into a single string with "; " separator
+            string newShapeMapping = string.Join("; ", resultMappings);
+
+            // Update strShapeMapping only if keywords were found
+            if (bHasKeyWord)
+            {
+                // Append to existing strShapeMapping if it's not empty
+                if (!string.IsNullOrEmpty(strShapeMapping))
+                {
+                    strShapeMapping += "; " + newShapeMapping;
+                }
+                else
+                {
+                    strShapeMapping = newShapeMapping; // Set to newShapeMapping if strShapeMapping is empty
+                }
+            }
+
+            // Return whether any keyword was found
+            return bHasKeyWord;
+        }
+
+
+
+
     }
 }

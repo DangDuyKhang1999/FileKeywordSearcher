@@ -11,6 +11,8 @@
 
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.102.2" />
+    <PackageReference Include="Microsoft.Office.Interop.Excel" Version="15.0.4795.1001" />
+    <PackageReference Include="MicrosoftOfficeCore" Version="15.0.0" />
   </ItemGroup>
 
   <ItemGroup>
