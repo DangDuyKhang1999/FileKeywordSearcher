@@ -4,20 +4,22 @@ using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
+using System.Threading.Tasks;
 
 
 namespace FileKeywordSearcher
 {
     public partial class Form1 : Form
     {
-        public enum FileExtension
+        public enum FileExtension 
         {
             Normal,
             CSV,
             Excel,
         }
 
-        FileKeywordSearcher fileKeywordSearcher = null!;
+        private FileKeywordSearcher fileKeywordSearcher = null!;
+        private ProgressBar progressBar1;
         public Form1()
         {
             InitializeComponent();
@@ -42,7 +44,7 @@ namespace FileKeywordSearcher
             }
         }
 
-        private void btnStartSearch_Click_1(object sender, EventArgs e)
+        private async void btnStartSearch_Click_1(object sender, EventArgs e)
         {
             if (String.IsNullOrEmpty(txtBrowser.Text))
             {
@@ -59,11 +61,17 @@ namespace FileKeywordSearcher
             }
 
             fileKeywordSearcher = new FileKeywordSearcher(txtBrowser.Text, txtKeyWord.Text);
-
-            if (!InitializeTableLayoutResult())
+            if (progressBar1 == null)
             {
-                //MessageBox.Show("Not find {txtBrowser.text} int", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                InitializeProgressBarAndFileProcess();
             }
+
+            // Show and start ProgressBar
+            progressBar1.Visible = true;
+            progressBar1.Value = 0;
+
+            // Asynchronously call ProcessFiles method
+            await Task.Run(() => fileKeywordSearcher.HasKeyWord(txtBrowser.Text));
         }
 
         private bool InitializeTableLayoutResult()
@@ -298,6 +306,68 @@ namespace FileKeywordSearcher
         {
             UpdateControlSizesAndLocations();
         }
+
+        // ProcessBar
+        private void InitializeProgressBarAndFileProcess()
+        {
+            // Initialize ProgressBar
+            progressBar1 = new ProgressBar();
+            progressBar1.Minimum = 0;
+            progressBar1.Maximum = 100;
+            progressBar1.Step = 1;
+            progressBar1.Visible = false;
+            progressBar1.Width = ClientRectangle.Width - 50;
+
+            // Calculate position to place progressBar1 at the bottom of the form
+            int progressBarHeight = progressBar1.Height;
+            int progressBarY = (ClientRectangle.Height - progressBarHeight) /2; // Place at the bottom
+
+            progressBar1.Location = new Point(25, progressBarY);
+
+            // Add ProgressBar to Form
+            this.Controls.Add(progressBar1);
+
+            // Bring ProgressBar to front
+            progressBar1.BringToFront();
+
+            // Initialize FileProcess instance and subscribe to ProgressChanged event
+            fileKeywordSearcher.ProgressChanged += FileProcessor_ProgressChanged;
+        }
+
+
+
+        private void FileProcessor_ProgressChanged(object sender, int percent)
+        {
+            // Handle ProgressChanged event from fileProcessor
+            this.Invoke((MethodInvoker)delegate ()
+            {
+                progressBar1.Value = percent;
+                progressBar1.Refresh(); // Ensure ProgressBar updates visually
+
+                // Check if progress is complete (100%)
+                if (percent >= 100)
+                {
+                    // Remove ProgressBar from Form
+
+                    System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
+                    timer.Interval = 1000; // 3 seconds
+                    timer.Tick += (s, e) =>
+                    {
+                        timer.Stop();
+                        progressBar1.Visible = false;
+
+                        // Remove ProgressBar from Form
+                        this.Controls.Remove(progressBar1);
+                        InitializeTableLayoutResult();
+
+                        // Optionally unsubscribe from ProgressChanged event to prevent further updates
+                        fileKeywordSearcher.ProgressChanged -= FileProcessor_ProgressChanged;
+                    };
+                    timer.Start();
+                }
+            });
+        }
+
 
 
     }

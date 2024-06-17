@@ -11,21 +11,29 @@ namespace FileKeywordSearcher
     {
         public string m_strBrowser { get; set; }
         public string m_strKeyWord { get; set; }
+        public int m_iFileCount { get; set; }
+        public int m_iTotalFileCount { get; set; }
 
         private List<FileItem> m_fileItems = new List<FileItem>();
 
+        public event EventHandler<int> ProgressChanged;
+
         public FileKeywordSearcher(string strBrowser, string strKeyWord)
         {
+            m_iFileCount = 0;
+            m_iTotalFileCount = CountFiles(strBrowser);
             m_strBrowser = strBrowser;
             m_strKeyWord = strKeyWord;
-            HasKeyWord(m_strBrowser);
         }
 
         public List<FileItem> GetFileItems()
         {
             return m_fileItems;
         }
-
+        protected virtual void OnProgressChanged(int percent)
+        {
+            ProgressChanged?.Invoke(this, percent); // Trigger the ProgressChanged event
+        }
         public bool HasKeyWord(string directoryPath)
         {
             bool iResult = false;
@@ -73,6 +81,10 @@ namespace FileKeywordSearcher
                     }
 
                 }
+                // Increment file counter and report progress
+                m_iFileCount++;
+                int percentComplete = (int)((double)m_iFileCount / m_iTotalFileCount * 100);
+                OnProgressChanged(percentComplete);
             }
 
             // Recursively check all subdirectories
@@ -83,6 +95,22 @@ namespace FileKeywordSearcher
 
             return iResult;
         }
+        public int CountFiles(string directoryPath)
+        {
+            int totalCount = 0;
+
+            // Count all files in the current directory
+            totalCount += Directory.GetFiles(directoryPath).Length;
+
+            // Recursively count all files in subdirectories
+            foreach (var subDirectory in Directory.GetDirectories(directoryPath))
+            {
+                totalCount += CountFiles(subDirectory);
+            }
+
+            return totalCount;
+        }
+
 
         private bool CheckFileForKeyword(string filePath, ref string strLineMapping)
         {
@@ -359,9 +387,5 @@ namespace FileKeywordSearcher
             // Return whether any keyword was found
             return bHasKeyWord;
         }
-
-
-
-
     }
 }
