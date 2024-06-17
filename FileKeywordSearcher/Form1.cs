@@ -26,6 +26,7 @@ namespace FileKeywordSearcher
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             StartPosition = FormStartPosition.CenterScreen;
             Resize += Form1_SizeChanged;
+            SizeChanged += (sender, e) => { UpdateProgressBarWidth(); UpdateProgressBarPosition(); };
         }
 
         private void btnBrowser_Click(object sender, EventArgs e)
@@ -305,6 +306,8 @@ namespace FileKeywordSearcher
         private void Form1_SizeChanged(object? sender, EventArgs e)
         {
             UpdateControlSizesAndLocations();
+            UpdateProgressBarWidth();
+            UpdateProgressBarPosition();
         }
 
         // ProcessBar
@@ -316,13 +319,9 @@ namespace FileKeywordSearcher
             progressBar1.Maximum = 100;
             progressBar1.Step = 1;
             progressBar1.Visible = false;
-            progressBar1.Width = ClientRectangle.Width - 50;
-
-            // Calculate position to place progressBar1 at the bottom of the form
-            int progressBarHeight = progressBar1.Height;
-            int progressBarY = (ClientRectangle.Height - progressBarHeight) /2; // Place at the bottom
-
-            progressBar1.Location = new Point(25, progressBarY);
+            progressBar1.Height = ClientRectangle.Height / 15;
+            UpdateProgressBarWidth(); // Cập nhật chiều rộng của ProgressBar ban đầu
+            UpdateProgressBarPosition(); // Cập nhật vị trí của ProgressBar ban đầu
 
             // Add ProgressBar to Form
             this.Controls.Add(progressBar1);
@@ -334,6 +333,24 @@ namespace FileKeywordSearcher
             fileKeywordSearcher.ProgressChanged += FileProcessor_ProgressChanged;
         }
 
+        private void UpdateProgressBarWidth()
+        {
+            if (progressBar1 != null)
+            {
+                progressBar1.Width = ClientRectangle.Width - 50;
+                progressBar1.Height = ClientRectangle.Height / 15;
+            }
+        }
+        private void UpdateProgressBarPosition()
+        {
+            if (progressBar1 != null)
+            {
+                int progressBarHeight = progressBar1.Height;
+                int progressBarY = (ClientRectangle.Height - progressBarHeight) / 2;
+
+                progressBar1.Location = new Point((ClientRectangle.Width - progressBar1.Width) / 2, progressBarY);
+            }
+        }
 
 
         private void FileProcessor_ProgressChanged(object sender, int percent)
@@ -348,9 +365,8 @@ namespace FileKeywordSearcher
                 if (percent >= 100)
                 {
                     // Remove ProgressBar from Form
-
                     System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
-                    timer.Interval = 1000; // 3 seconds
+                    timer.Interval = 1000;
                     timer.Tick += (s, e) =>
                     {
                         timer.Stop();
@@ -367,8 +383,6 @@ namespace FileKeywordSearcher
                 }
             });
         }
-
-
 
     }
 }
