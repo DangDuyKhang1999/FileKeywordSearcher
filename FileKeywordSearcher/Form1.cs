@@ -64,6 +64,7 @@ namespace FileKeywordSearcher
             fileKeywordSearcher = new FileKeywordSearcher(txtBrowser.Text, txtKeyWord.Text);
             if (progressBar1 == null)
             {
+                tableLayoutPanel.Controls.Clear();
                 InitializeProgressBarAndFileProcess();
             }
 
@@ -371,7 +372,7 @@ namespace FileKeywordSearcher
                     {
                         timer.Stop();
                         progressBar1.Visible = false;
-
+                        progressBar1 = null;
                         // Remove ProgressBar from Form
                         this.Controls.Remove(progressBar1);
                         InitializeTableLayoutResult();
