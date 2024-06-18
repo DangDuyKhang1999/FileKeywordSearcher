@@ -62,6 +62,10 @@ namespace FileKeywordSearcher
             }
 
             fileKeywordSearcher = new FileKeywordSearcher(txtBrowser.Text, txtKeyWord.Text);
+            if (!fileKeywordSearcher.getTotalFiles())
+            {
+                return;
+            }
             if (progressBar1 == null)
             {
                 tableLayoutPanel.Controls.Clear();

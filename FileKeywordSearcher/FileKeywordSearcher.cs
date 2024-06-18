@@ -21,7 +21,7 @@ namespace FileKeywordSearcher
         public FileKeywordSearcher(string strBrowser, string strKeyWord)
         {
             m_iFileCount = 0;
-            m_iTotalFileCount = CountFiles(strBrowser);
+            m_iTotalFileCount = 0;
             m_strBrowser = strBrowser;
             m_strKeyWord = strKeyWord;
         }
@@ -107,10 +107,31 @@ namespace FileKeywordSearcher
             {
                 totalCount += CountFiles(subDirectory);
             }
-
             return totalCount;
         }
-
+        public bool getTotalFiles()
+        {
+            try
+            {
+                m_iTotalFileCount = CountFiles(m_strBrowser);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                MessageBox.Show($"Access to directory '{m_strBrowser}' is denied: {ex.Message}. Please ensure you have the necessary permissions to access this folder.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Exception occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            if (m_iTotalFileCount == 0)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
 
         private bool CheckFileForKeyword(string filePath, ref string strLineMapping)
         {
