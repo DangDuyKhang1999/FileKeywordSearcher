@@ -11,11 +11,12 @@ namespace FileKeywordSearcher
 {
     public partial class Form1 : Form
     {
-        public enum FileExtension 
+        public enum FileExtension
         {
             Normal,
             CSV,
             Excel,
+            PDF,
         }
 
         private FileKeywordSearcher fileKeywordSearcher = null!;
@@ -138,11 +139,36 @@ namespace FileKeywordSearcher
                     string linecode = "";
                     if (fileItem.m_fileExtension == FileExtension.Normal)
                     {
-                        linecode = $"   Line: {fileItem.m_strLineMapping}";
+                        if (fileItem.m_bHasMultiKeyWord)
+                        {
+                            linecode = $"   Lines: {fileItem.m_strLineMapping}";
+                        }
+                        else
+                        {
+                            linecode = $"   Line: {fileItem.m_strLineMapping}";
+                        }
                     }
                     else if (fileItem.m_fileExtension == FileExtension.CSV || fileItem.m_fileExtension == FileExtension.Excel)
                     {
-                        linecode = $"   Cell: {fileItem.m_strLineMapping}";
+                        if (fileItem.m_bHasMultiKeyWord)
+                        {
+                            linecode = $"   Cells: {fileItem.m_strLineMapping}";
+                        }
+                        else
+                        {
+                            linecode = $"   Cell: {fileItem.m_strLineMapping}";
+                        }
+                    }
+                    else if (fileItem.m_fileExtension == FileExtension.PDF)
+                    {
+                        if (fileItem.m_bHasMultiKeyWord)
+                        {
+                            linecode = $"   Pages: {fileItem.m_strLineMapping}";
+                        }
+                        else
+                        {
+                            linecode = $"   Page: {fileItem.m_strLineMapping}";
+                        }
                     }
 
                     RichTextBox rtItem = new()

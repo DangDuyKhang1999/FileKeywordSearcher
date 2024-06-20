@@ -2,8 +2,12 @@
 using static FileKeywordSearcher.Form1;
 using ClosedXML.Excel;
 using System.Runtime.InteropServices;
+using iTextSharp.text.pdf;
+using iTextSharp.text.pdf.parser;
 using Excel = Microsoft.Office.Interop.Excel;
 using Office = Microsoft.Office.Core;
+using Path = System.IO.Path;
+using System.Collections.Generic;
 
 namespace FileKeywordSearcher
 {
@@ -43,45 +47,36 @@ namespace FileKeywordSearcher
             {
                 string strLineMapping = "";
                 FileExtension fileExtension = GetFileExtension(file);
-                if (fileExtension == FileExtension.Normal)
-                {
-                    if (CheckFileForKeyword(file, ref strLineMapping))
-                    {
-                        FileItem fileItem = new FileItem(file, strLineMapping, fileExtension);
-                        m_fileItems.Add(fileItem);
-                        iResult = true; // If at least one file is found, set result to true
-                    }
-                }
-                else if (fileExtension == FileExtension.CSV)
-                {
-                    if (CheckCSVForKeyword(file, ref strLineMapping))
-                    {
-                        FileItem fileItem = new FileItem(file, strLineMapping, fileExtension);
-                        m_fileItems.Add(fileItem);
-                        iResult = true; // If at least one file is found, set result to true
-                    }
-                }
-                else if (fileExtension == FileExtension.Excel)
-                {
-                    bool bExcelCell = false;
-                    bool bExcelShapes = false;
-                    if (CheckExcelForKeyword(file, ref strLineMapping))
-                    {
-                        bExcelCell = true;
-                    }
-                    if (CheckExcelShapesForKeyword(file, ref strLineMapping))
-                    {
-                        bExcelShapes = true;
-                    }
-                    if (bExcelCell || bExcelShapes)
-                    {
-                        FileItem fileItem = new FileItem(file, strLineMapping, fileExtension);
-                        m_fileItems.Add(fileItem);
-                        iResult = true; // If at least one file is found, set result to true
-                    }
+                bool keywordFound = false;
+                bool bHasMultiKeyWord = false;
 
+                switch (fileExtension)
+                {
+                    case FileExtension.Normal:
+                        keywordFound = CheckFileForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
+                        break;
+
+                    case FileExtension.CSV:
+                        keywordFound = CheckExcelForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
+                        break;
+
+                    case FileExtension.Excel:
+                        bool bExcelCell = CheckExcelForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
+                        bool bExcelShapes = CheckExcelShapesForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
+                        keywordFound = bExcelCell || bExcelShapes;
+                        break;
+
+                    case FileExtension.PDF:
+                        keywordFound = CheckPDFForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
+                        break;
                 }
-                // Increment file counter and report progress
+
+                if (keywordFound)
+                {
+                    FileItem fileItem = new FileItem(file, strLineMapping, fileExtension, bHasMultiKeyWord);
+                    m_fileItems.Add(fileItem);
+                    iResult = true; // If at least one file is found, set result to true
+                }
                 m_iFileCount++;
                 int percentComplete = (int)((double)m_iFileCount / m_iTotalFileCount * 100);
                 OnProgressChanged(percentComplete);
@@ -133,7 +128,7 @@ namespace FileKeywordSearcher
             }
         }
 
-        private bool CheckFileForKeyword(string filePath, ref string strLineMapping)
+        private bool CheckFileForKeyword(string filePath, ref string strLineMapping, ref bool bHasMultiKeyWord)
         {
             bool bHasKeyWord = false;
             List<int> keywordLines = new List<int>();
@@ -160,7 +155,10 @@ namespace FileKeywordSearcher
                 // Handle exceptions such as file not found, access denied, etc.
                 MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
             }
-
+            if (keywordLines.Count > 1)
+            {
+                bHasMultiKeyWord = true;
+            }
             // Check if any keyword was found in the file
             if (bHasKeyWord)
             {
@@ -176,7 +174,7 @@ namespace FileKeywordSearcher
             return bHasKeyWord;
         }
 
-        private bool CheckCSVForKeyword(string filePath, ref string strCellMapping)
+        private bool CheckCSVForKeyword(string filePath, ref string strCellMapping, ref bool bHasMultiKeyWord)
         {
             bool bHasKeyWord = false;
             List<string> keywordCells = new List<string>();
@@ -211,7 +209,10 @@ namespace FileKeywordSearcher
                 // Handle exceptions such as file not found, access denied, etc.
                 MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
             }
-
+            if (keywordCells.Count > 1)
+            {
+                bHasMultiKeyWord = true;
+            }
             // Check if any keyword was found in the file
             if (bHasKeyWord)
             {
@@ -238,19 +239,8 @@ namespace FileKeywordSearcher
             }
             return columnName;
         }
-        private FileExtension GetFileExtension(string fileName)
-        {
-            string extension = Path.GetExtension(fileName).ToLowerInvariant();
-            return extension switch
-            {
-                ".xls" => FileExtension.Excel,
-                ".xlsx" => FileExtension.Excel,
-                ".csv" => FileExtension.CSV,
-                _ => FileExtension.Normal
-            };
-        }
 
-        public bool CheckExcelForKeyword(string filePath, ref string strCellMapping)
+        public bool CheckExcelForKeyword(string filePath, ref string strCellMapping, ref bool bHasMultiKeyWord)
         {
             bool bHasKeyWord = false;
             List<string> keywordCells = new List<string>();
@@ -286,7 +276,10 @@ namespace FileKeywordSearcher
                 // Handle exceptions such as file not found, access denied, etc.
                 MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
             }
-
+            if (keywordCells.Count > 1)
+            {
+                bHasMultiKeyWord = true;
+            }
             // Check if any keyword was found in the file
             if (bHasKeyWord)
             {
@@ -302,7 +295,7 @@ namespace FileKeywordSearcher
             return bHasKeyWord;
         }
 
-        public bool CheckExcelShapesForKeyword(string filePath, ref string strShapeMapping)
+        public bool CheckExcelShapesForKeyword(string filePath, ref string strShapeMapping, ref bool bHasMultiKeyWord)
         {
             bool bHasKeyWord = false;
             Dictionary<string, List<string>> sheetShapes = new Dictionary<string, List<string>>();
@@ -385,7 +378,10 @@ namespace FileKeywordSearcher
                 string sheetMapping = $"sheet name \"{sheetName}\": {string.Join(", ", shapesInSheet)}";
                 resultMappings.Add(sheetMapping);
             }
-
+            if (resultMappings.Count > 1)
+            { 
+                bHasMultiKeyWord = true;
+            }
             // Combine all worksheet mappings into a single string with "; " separator
             string newShapeMapping = string.Join("; ", resultMappings);
 
@@ -405,6 +401,77 @@ namespace FileKeywordSearcher
 
             // Return whether the keyword was found or not
             return bHasKeyWord;
+        }
+
+        public bool CheckPDFForKeyword(string filePath, ref string strKeywordMapping, ref bool bHasMultiKeyWord)
+        {
+            bool bHasKeyword = false;
+            HashSet<int> pagesWithKeyword = new HashSet<int>();
+
+            try
+            {
+                // Open the PDF file
+                using (PdfReader reader = new PdfReader(filePath))
+                {
+                    // Iterate through each page in the PDF file
+                    for (int i = 1; i <= reader.NumberOfPages; i++)
+                    {
+                        string text = PdfTextExtractor.GetTextFromPage(reader, i);
+
+                        // Process the text to remove unwanted spaces
+                        text = text.Replace(" ", "");
+
+                        // Search for the keyword in the text (case insensitive)
+                        if (text.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            // Save the page number if the keyword is found
+                            pagesWithKeyword.Add(i);
+                            bHasKeyword = true;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions such as file not found, access denied, etc.
+                Console.WriteLine($"Error reading file {filePath}: {ex.Message}");
+            }
+
+            // Build strKeywordMapping from the set of pagesWithKeyword
+            if (bHasKeyword)
+            {
+                if (pagesWithKeyword.Count > 1)
+                { 
+                    bHasMultiKeyWord = true;
+                }
+                string newKeywordMapping = string.Join(", ", pagesWithKeyword);
+
+                // Update strKeywordMapping only if the keyword is found
+                if (!string.IsNullOrEmpty(strKeywordMapping))
+                {
+                    strKeywordMapping += "; " + newKeywordMapping;
+                }
+                else
+                {
+                    strKeywordMapping = newKeywordMapping; // Set to newKeywordMapping if strKeywordMapping is empty
+                }
+            }
+
+            // Return whether the keyword was found or not
+            return bHasKeyword;
+        }
+
+        private FileExtension GetFileExtension(string fileName)
+        {
+            string extension = Path.GetExtension(fileName).ToLowerInvariant();
+            return extension switch
+            {
+                ".xls" => FileExtension.Excel,
+                ".xlsx" => FileExtension.Excel,
+                ".csv" => FileExtension.CSV,
+                ".pdf" => FileExtension.PDF,
+                _ => FileExtension.Normal
+            };
         }
     }
 }
