@@ -57,7 +57,7 @@ namespace FileKeywordSearcher
                         break;
 
                     case FileExtension.CSV:
-                        keywordFound = CheckExcelForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
+                        keywordFound = CheckCSVForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
                         break;
 
                     case FileExtension.Excel:
