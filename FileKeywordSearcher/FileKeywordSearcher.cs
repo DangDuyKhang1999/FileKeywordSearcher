@@ -315,19 +315,18 @@ namespace FileKeywordSearcher
                 excelApp = new Excel.Application();
                 workbook = excelApp.Workbooks.Open(filePath);
 
-                // Loop through each worksheet in the workbook
+                // Iterate through each worksheet in the workbook
                 foreach (Excel.Worksheet worksheet in workbook.Worksheets)
                 {
-                    string sheetName = worksheet.Name; // Get current sheet name
-                    bool firstShapeInSheet = true; // Flag to track if it's the first shape in the sheet
+                    string sheetName = worksheet.Name;
 
-                    // Initialize list for shapes in current sheet
+                    // Initialize the list of shapes in the current worksheet
                     if (!sheetShapes.ContainsKey(sheetName))
                     {
                         sheetShapes[sheetName] = new List<string>();
                     }
 
-                    // Loop through each shape in the worksheet
+                    // Iterate through each shape in the worksheet
                     foreach (Excel.Shape shape in worksheet.Shapes)
                     {
                         // Check if the shape contains text
@@ -338,19 +337,16 @@ namespace FileKeywordSearcher
                             // Check if the text contains the keyword (case insensitive)
                             if (textRange.Text.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
                             {
-                                // If the keyword is found in the shape, add the shape position to the list
+                                // If the keyword is found in the shape, add the shape's position to the list
                                 Excel.Range topLeftCell = shape.TopLeftCell;
-                                string shapePosition = $"{topLeftCell.get_Address(false, false)}";
+                                string shapePosition = topLeftCell.get_Address(false, false);
 
-                                // Check if shapePosition already exists in current sheet's shapes
+                                // Check if shapePosition already exists in the current worksheet's shapes
                                 if (!sheetShapes[sheetName].Contains(shapePosition))
                                 {
                                     sheetShapes[sheetName].Add(shapePosition);
                                     bHasKeyWord = true;
                                 }
-
-                                // After the first shape, set firstShapeInSheet to false
-                                firstShapeInSheet = false;
                             }
                         }
                     }
@@ -363,7 +359,7 @@ namespace FileKeywordSearcher
             }
             finally
             {
-                // Clean up
+                // Cleanup
                 if (workbook != null)
                 {
                     workbook.Close(false);
@@ -374,27 +370,29 @@ namespace FileKeywordSearcher
                     excelApp.Quit();
                     Marshal.ReleaseComObject(excelApp);
                 }
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
             }
 
-            // Construct strShapeMapping from sheetShapes dictionary
+            // Build strShapeMapping from the sheetShapes dictionary
             List<string> resultMappings = new List<string>();
             foreach (var kvp in sheetShapes)
             {
                 string sheetName = kvp.Key;
                 List<string> shapesInSheet = kvp.Value;
 
-                // Format sheet's shapes into a single string
+                // Format the shapes of the worksheet into a single string
                 string sheetMapping = $"sheet name \"{sheetName}\": {string.Join(", ", shapesInSheet)}";
                 resultMappings.Add(sheetMapping);
             }
 
-            // Combine all sheet mappings into a single string with "; " separator
+            // Combine all worksheet mappings into a single string with "; " separator
             string newShapeMapping = string.Join("; ", resultMappings);
 
-            // Update strShapeMapping only if keywords were found
+            // Update strShapeMapping only if the keyword is found
             if (bHasKeyWord)
             {
-                // Append to existing strShapeMapping if it's not empty
+                // Append to the current strShapeMapping if it is not empty
                 if (!string.IsNullOrEmpty(strShapeMapping))
                 {
                     strShapeMapping += "; " + newShapeMapping;
@@ -405,7 +403,7 @@ namespace FileKeywordSearcher
                 }
             }
 
-            // Return whether any keyword was found
+            // Return whether the keyword was found or not
             return bHasKeyWord;
         }
     }
