@@ -350,6 +350,7 @@ namespace FileKeywordSearcher
             UpdateControlSizesAndLocations();
             UpdateProgressBarWidth();
             UpdateProgressBarPosition();
+            UpdateProgressBarFont();
         }
 
         // ProcessBar
@@ -371,9 +372,8 @@ namespace FileKeywordSearcher
                 TextAlign = HorizontalAlignment.Center,
                 BorderStyle = BorderStyle.None,
                 Height = progressBar1.Height,
-                Width = 100,
+                Width = progressBar1.Width,
                 BackColor = Color.FromArgb(190, 217, 217),
-                Font = new Font("Segoe UI", progressBar1.Height / 2, FontStyle.Bold, GraphicsUnit.Point),
             };
             // Initialize TextBox File Path
             txtFilePath = new TextBox
@@ -383,12 +383,12 @@ namespace FileKeywordSearcher
                 Height = progressBar1.Height,
                 Width = progressBar1.Width,
                 BackColor = Color.FromArgb(190, 217, 217),
-                Font = new Font("Segoe UI", progressBar1.Height / 2, FontStyle.Bold, GraphicsUnit.Point),
             };
 
             //Position
             UpdateProgressBarWidth();
             UpdateProgressBarPosition();
+            UpdateProgressBarFont();
 
             // Add controls to Form
             this.Controls.Add(progressBar1);
@@ -411,6 +411,7 @@ namespace FileKeywordSearcher
                 progressBar1.Width = ClientRectangle.Width - 50;
                 progressBar1.Height = ClientRectangle.Height / 15;
                 txtFilePath.Width = progressBar1.Width;
+                txtProgressPercent.Width = progressBar1.Width;
             }
         }
         private void UpdateProgressBarPosition()
@@ -418,11 +419,22 @@ namespace FileKeywordSearcher
             if (progressBar1 != null && txtProgressPercent != null && txtFilePath != null)
             {
                 int progressBarHeight = progressBar1.Height;
+                int progressBarX = ClientRectangle.Width - progressBar1.Width;
                 int progressBarY = (ClientRectangle.Height - progressBarHeight) / 2;
 
-                progressBar1.Location = new Point((ClientRectangle.Width - progressBar1.Width) / 2, progressBarY);
-                txtProgressPercent.Location = new Point(ClientRectangle.Width / 2 - progressBar1.Height, progressBarY - txtProgressPercent.Height - 10);
-                txtFilePath.Location = new Point((ClientRectangle.Width - progressBar1.Width) / 2, progressBarY + progressBar1.Height * 2);
+                progressBar1.Location = new Point(progressBarX / 2, progressBarY);
+                txtProgressPercent.Location = new Point(progressBarX, progressBarY - txtProgressPercent.Height - 10);
+                txtFilePath.Location = new Point(progressBarX / 2, progressBarY + progressBar1.Height * 2);
+            }
+        }
+
+        private void UpdateProgressBarFont()
+        {
+            if (progressBar1 != null && txtProgressPercent != null && txtFilePath != null)
+            {
+                Font font =  new Font("Segoe UI", progressBar1.Height / 2, FontStyle.Bold, GraphicsUnit.Point);
+                txtFilePath.Font = font;
+                txtProgressPercent.Font = font;
             }
         }
 

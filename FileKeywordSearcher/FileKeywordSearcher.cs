@@ -392,11 +392,26 @@ namespace FileKeywordSearcher
                 {
                     string sheetName = kvp.Key;
                     List<string> cellsInSheet = kvp.Value;
-                    List<string> shapesInSheet = sheetShapes.ContainsKey(sheetName) ? sheetShapes[sheetName] : new List<string>();
+                    List<string> shapesInSheet = sheetShapes.TryGetValue(sheetName, out var shapes) ? shapes : new List<string>();
+                    bool bHasKeyWordInSheet = false;
+                    string sheetMapping = $"{sheetName}:: ";
 
-                    // Combine cells and shapes for the sheet into a single string
-                    string sheetMapping = $"\"{sheetName}\":: Cells({string.Join(", ", cellsInSheet)}), Shapes({string.Join(", ", shapesInSheet)})";
-                    resultMappings.Add(sheetMapping);
+                    if (cellsInSheet.Count > 0)
+                    {
+                        sheetMapping += (cellsInSheet.Count > 1) ? $"Cells({string.Join(", ", cellsInSheet)})" : $"Cell({cellsInSheet[0]})";
+                        bHasKeyWordInSheet = true;
+                    }
+
+                    if (shapesInSheet.Count > 0)
+                    {
+                        if (sheetMapping.Length > sheetName.Length + 3)
+                        {
+                            sheetMapping += ", ";
+                        }
+                        sheetMapping += (shapesInSheet.Count > 1) ? $"Shapes({string.Join(", ", shapesInSheet)})" : $"Shape({shapesInSheet[0]})";
+                        bHasKeyWordInSheet = true;
+                    }
+                    if(bHasKeyWordInSheet) { resultMappings.Add(sheetMapping); }
                 }
 
                 // Update strMapping with the combined mappings
