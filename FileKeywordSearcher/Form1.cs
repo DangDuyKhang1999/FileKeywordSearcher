@@ -150,14 +150,8 @@ namespace FileKeywordSearcher
                     }
                     else if (fileItem.m_fileExtension == FileExtension.CSV || fileItem.m_fileExtension == FileExtension.Excel)
                     {
-                        if (fileItem.m_bHasMultiKeyWord)
-                        {
-                            linecode = $"   Cells: {fileItem.m_strLineMapping}";
-                        }
-                        else
-                        {
-                            linecode = $"   Cell: {fileItem.m_strLineMapping}";
-                        }
+
+                        linecode = $"   Cell: {fileItem.m_strLineMapping}";
                     }
                     else if (fileItem.m_fileExtension == FileExtension.PDF)
                     {

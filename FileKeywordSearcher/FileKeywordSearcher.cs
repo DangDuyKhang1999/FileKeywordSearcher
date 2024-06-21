@@ -1,13 +1,11 @@
 ﻿using System.Text;
 using static FileKeywordSearcher.Form1;
-using ClosedXML.Excel;
-using System.Runtime.InteropServices;
 using iTextSharp.text.pdf;
 using iTextSharp.text.pdf.parser;
-using Excel = Microsoft.Office.Interop.Excel;
-using Office = Microsoft.Office.Core;
 using Path = System.IO.Path;
-using System.Collections.Generic;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Spreadsheet;
+using DocumentFormat.OpenXml.Drawing.Spreadsheet;
 
 namespace FileKeywordSearcher
 {
@@ -61,9 +59,7 @@ namespace FileKeywordSearcher
                         break;
 
                     case FileExtension.Excel:
-                        bool bExcelCell = CheckExcelForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
-                        bool bExcelShapes = CheckExcelShapesForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
-                        keywordFound = bExcelCell || bExcelShapes;
+                        keywordFound = CheckExcelForKeywordAndShapes(file, ref strLineMapping);
                         break;
 
                     case FileExtension.PDF:
@@ -239,164 +235,131 @@ namespace FileKeywordSearcher
             }
             return columnName;
         }
-
-        public bool CheckExcelForKeyword(string filePath, ref string strCellMapping, ref bool bHasMultiKeyWord)
+        private WorksheetPart GetWorksheetPartByName(WorkbookPart workbookPart, string sheetName)
         {
-            bool bHasKeyWord = false;
-            List<string> keywordCells = new List<string>();
+            // Tìm WorksheetPart theo tên Sheet
+            Sheet sheet = workbookPart.Workbook.Descendants<Sheet>().FirstOrDefault(s => s.Name == sheetName);
+            if (sheet == null)
+                return null;
 
-            try
+            return (WorksheetPart)workbookPart.GetPartById(sheet.Id);
+        }
+
+        private string GetCellValue(SpreadsheetDocument document, Cell cell)
+        {
+            SharedStringTablePart sstPart = document.WorkbookPart.GetPartsOfType<SharedStringTablePart>().FirstOrDefault();
+            string value = cell.InnerText;
+
+            if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
             {
-                // Open the Excel workbook
-                using (var workbook = new XLWorkbook(filePath))
-                {
-                    // Loop through each worksheet in the workbook
-                    foreach (var worksheet in workbook.Worksheets)
-                    {
-                        // Loop through each row in the worksheet
-                        foreach (var row in worksheet.RowsUsed())
-                        {
-                            // Loop through each cell in the row
-                            foreach (var cell in row.CellsUsed())
-                            {
-                                // Check if the current cell contains the keyword (case insensitive)
-                                if (cell.GetString().IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
-                                {
-                                    // If the keyword is found in the cell, add the cell address to the list
-                                    keywordCells.Add(cell.Address.ToString());
-                                    bHasKeyWord = true;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                // Handle exceptions such as file not found, access denied, etc.
-                MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
-            }
-            if (keywordCells.Count > 1)
-            {
-                bHasMultiKeyWord = true;
-            }
-            // Check if any keyword was found in the file
-            if (bHasKeyWord)
-            {
-                // If keywords were found, convert the list of cell positions to a string
-                strCellMapping = string.Join(", ", keywordCells);
+                return sstPart.SharedStringTable.ChildElements[Int32.Parse(value)].InnerText;
             }
             else
             {
-                // If no keyword was found, set strCellMapping to an empty string
-                strCellMapping = "";
+                return value;
             }
-
-            return bHasKeyWord;
         }
-
-        public bool CheckExcelShapesForKeyword(string filePath, ref string strShapeMapping, ref bool bHasMultiKeyWord)
+        public bool CheckExcelForKeywordAndShapes(string filePath, ref string strMapping)
         {
             bool bHasKeyWord = false;
+            Dictionary<string, List<string>> keywordCells = new Dictionary<string, List<string>>();
             Dictionary<string, List<string>> sheetShapes = new Dictionary<string, List<string>>();
-            Excel.Application excelApp = null;
-            Excel.Workbook workbook = null;
 
             try
             {
-                // Open the Excel application and workbook
-                excelApp = new Excel.Application();
-                workbook = excelApp.Workbooks.Open(filePath);
-
-                // Iterate through each worksheet in the workbook
-                foreach (Excel.Worksheet worksheet in workbook.Worksheets)
+                // Open the Excel document
+                using (SpreadsheetDocument document = SpreadsheetDocument.Open(filePath, false))
                 {
-                    string sheetName = worksheet.Name;
-
-                    // Initialize the list of shapes in the current worksheet
-                    if (!sheetShapes.ContainsKey(sheetName))
+                    WorkbookPart workbookPart = document.WorkbookPart;
+                    foreach (Sheet sheet in workbookPart.Workbook.Sheets)
                     {
-                        sheetShapes[sheetName] = new List<string>();
-                    }
+                        WorksheetPart worksheetPart = (WorksheetPart)workbookPart.GetPartById(sheet.Id);
+                        string sheetName = sheet.Name;
 
-                    // Iterate through each shape in the worksheet
-                    foreach (Excel.Shape shape in worksheet.Shapes)
-                    {
-                        // Check if the shape contains text
-                        if (shape.TextFrame2.HasText == Office.MsoTriState.msoTrue)
+                        // Initialize the list of cells containing keyword in the current worksheet
+                        if (!keywordCells.ContainsKey(sheetName))
                         {
-                            var textRange = shape.TextFrame2.TextRange;
+                            keywordCells[sheetName] = new List<string>();
+                        }
 
-                            // Check if the text contains the keyword (case insensitive)
-                            if (textRange.Text.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                        // Initialize the list of shapes in the current worksheet
+                        if (!sheetShapes.ContainsKey(sheetName))
+                        {
+                            sheetShapes[sheetName] = new List<string>();
+                        }
+
+                        // Check keyword in cells
+                        SheetData sheetData = worksheetPart.Worksheet.Elements<SheetData>().FirstOrDefault();
+                        foreach (Row row in sheetData.Elements<Row>())
+                        {
+                            foreach (Cell cell in row.Elements<Cell>())
                             {
-                                // If the keyword is found in the shape, add the shape's position to the list
-                                Excel.Range topLeftCell = shape.TopLeftCell;
-                                string shapePosition = topLeftCell.get_Address(false, false);
+                                string cellValue = GetCellValue(document, cell);
 
-                                // Check if shapePosition already exists in the current worksheet's shapes
-                                if (!sheetShapes[sheetName].Contains(shapePosition))
+                                // Check if the cell contains the keyword (case insensitive)
+                                if (cellValue.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
                                 {
-                                    sheetShapes[sheetName].Add(shapePosition);
-                                    bHasKeyWord = true;
+                                    string cellAddress = cell.CellReference.ToString();
+                                    if (!keywordCells[sheetName].Contains(cellAddress))
+                                    {
+                                        keywordCells[sheetName].Add(cellAddress);
+                                        bHasKeyWord = true;
+                                    }
+                                }
+                            }
+                        }
+
+                        // Check shapes in worksheet
+                        if (worksheetPart.DrawingsPart != null)
+                        {
+                            var drawingsPart = worksheetPart.DrawingsPart;
+                            var shapeElements = drawingsPart.WorksheetDrawing.Elements<TwoCellAnchor>();
+
+                            foreach (var element in shapeElements)
+                            {
+                                // Get the text content of the shape
+                                var shapeText = element.Descendants<DocumentFormat.OpenXml.Drawing.Text>().Select(t => t.Text).Aggregate(string.Empty, (current, text) => current + text);
+
+                                // Get the start position of the shape
+                                var fromMarker = element.FromMarker;
+                                int fromRow = int.Parse(fromMarker.RowId.Text); // Row index (0-based)
+                                int fromColumn = int.Parse(fromMarker.ColumnId.Text); // Column index (0-based)
+                                string shapePosition = $"{GetExcelColumnName(fromColumn + 1)}{fromRow + 1}"; // Convert to 1-based
+
+                                // Check if the shape text contains the keyword (case insensitive)
+                                if (shapeText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                                {
+                                    if (!sheetShapes[sheetName].Contains(shapePosition))
+                                    {
+                                        sheetShapes[sheetName].Add(shapePosition);
+                                        bHasKeyWord = true;
+                                    }
                                 }
                             }
                         }
                     }
                 }
+
+                // Build strMapping combining keyword cells and shapes for each sheet
+                List<string> resultMappings = new List<string>();
+                foreach (var kvp in keywordCells)
+                {
+                    string sheetName = kvp.Key;
+                    List<string> cellsInSheet = kvp.Value;
+                    List<string> shapesInSheet = sheetShapes.ContainsKey(sheetName) ? sheetShapes[sheetName] : new List<string>();
+
+                    // Combine cells and shapes for the sheet into a single string
+                    string sheetMapping = $"\"{sheetName}\" - Cells: {string.Join(", ", cellsInSheet)}, Shapes: {string.Join(", ", shapesInSheet)}";
+                    resultMappings.Add(sheetMapping);
+                }
+
+                // Update strMapping with the combined mappings
+                strMapping = string.Join("; ", resultMappings);
             }
             catch (Exception ex)
             {
                 // Handle exceptions such as file not found, access denied, etc.
                 MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
-            }
-            finally
-            {
-                // Cleanup
-                if (workbook != null)
-                {
-                    workbook.Close(false);
-                    Marshal.ReleaseComObject(workbook);
-                }
-                if (excelApp != null)
-                {
-                    excelApp.Quit();
-                    Marshal.ReleaseComObject(excelApp);
-                }
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-            }
-
-            // Build strShapeMapping from the sheetShapes dictionary
-            List<string> resultMappings = new List<string>();
-            foreach (var kvp in sheetShapes)
-            {
-                string sheetName = kvp.Key;
-                List<string> shapesInSheet = kvp.Value;
-
-                // Format the shapes of the worksheet into a single string
-                string sheetMapping = $"sheet name \"{sheetName}\": {string.Join(", ", shapesInSheet)}";
-                resultMappings.Add(sheetMapping);
-            }
-            if (resultMappings.Count > 1)
-            { 
-                bHasMultiKeyWord = true;
-            }
-            // Combine all worksheet mappings into a single string with "; " separator
-            string newShapeMapping = string.Join("; ", resultMappings);
-
-            // Update strShapeMapping only if the keyword is found
-            if (bHasKeyWord)
-            {
-                // Append to the current strShapeMapping if it is not empty
-                if (!string.IsNullOrEmpty(strShapeMapping))
-                {
-                    strShapeMapping += "; " + newShapeMapping;
-                }
-                else
-                {
-                    strShapeMapping = newShapeMapping; // Set to newShapeMapping if strShapeMapping is empty
-                }
             }
 
             // Return whether the keyword was found or not
@@ -434,7 +397,7 @@ namespace FileKeywordSearcher
             catch (Exception ex)
             {
                 // Handle exceptions such as file not found, access denied, etc.
-                Console.WriteLine($"Error reading file {filePath}: {ex.Message}");
+                MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
             }
 
             // Build strKeywordMapping from the set of pagesWithKeyword
