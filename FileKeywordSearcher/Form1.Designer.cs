@@ -136,6 +136,5 @@ namespace FileKeywordSearcher
         private TableLayoutPanel tableLayoutPanel;
         private Button btnStartSearch;
         private TextBox txtKeyWord;
-        private ProgressBar progressBar;
     }
 }

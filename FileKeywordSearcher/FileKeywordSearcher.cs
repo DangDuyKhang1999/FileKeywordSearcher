@@ -235,30 +235,39 @@ namespace FileKeywordSearcher
             }
             return columnName;
         }
-        private WorksheetPart GetWorksheetPartByName(WorkbookPart workbookPart, string sheetName)
-        {
-            // Tìm WorksheetPart theo tên Sheet
-            Sheet sheet = workbookPart.Workbook.Descendants<Sheet>().FirstOrDefault(s => s.Name == sheetName);
-            if (sheet == null)
-                return null;
-
-            return (WorksheetPart)workbookPart.GetPartById(sheet.Id);
-        }
 
         private string GetCellValue(SpreadsheetDocument document, Cell cell)
         {
-            SharedStringTablePart sstPart = document.WorkbookPart.GetPartsOfType<SharedStringTablePart>().FirstOrDefault();
-            string value = cell.InnerText;
+            if (document != null)
+            {
+                SharedStringTablePart? sstPart = document.WorkbookPart.GetPartsOfType<SharedStringTablePart>().FirstOrDefault();
 
-            if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
-            {
-                return sstPart.SharedStringTable.ChildElements[Int32.Parse(value)].InnerText;
+                if (sstPart != null)
+                {
+                    string value = cell.InnerText;
+
+                    if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
+                    {
+                        int index;
+                        if (Int32.TryParse(value, out index) && index < sstPart.SharedStringTable.ChildElements.Count)
+                        {
+                            return sstPart.SharedStringTable.ChildElements[index].InnerText;
+                        }
+                        else
+                        {
+                            return value;
+                        }
+                    }
+                    else
+                    {
+                        return value;
+                    }
+                }
+
             }
-            else
-            {
-                return value;
-            }
+            return "";
         }
+
         public bool CheckExcelForKeywordAndShapes(string filePath, ref string strMapping)
         {
             bool bHasKeyWord = false;
@@ -270,9 +279,25 @@ namespace FileKeywordSearcher
                 // Open the Excel document
                 using (SpreadsheetDocument document = SpreadsheetDocument.Open(filePath, false))
                 {
+                    if (document == null || document.WorkbookPart == null)
+                    {
+                        MessageBox.Show($"Unable to open or read the Excel document at {filePath}");
+                        return false; // Exit early if document or workbook part is null
+                    }
+
                     WorkbookPart workbookPart = document.WorkbookPart;
+                    if (workbookPart == null || workbookPart.Workbook == null || workbookPart.Workbook.Sheets == null)
+                    {
+                        MessageBox.Show($"Unable to open or read the Excel document at {filePath}");
+                        return false; // Exit early if document or workbook part is null
+                    }
+
                     foreach (Sheet sheet in workbookPart.Workbook.Sheets)
                     {
+                        if (sheet == null || workbookPart == null)
+                        {
+                            continue; // Skip null sheets or workbook parts
+                        }
                         WorksheetPart worksheetPart = (WorksheetPart)workbookPart.GetPartById(sheet.Id);
                         string sheetName = sheet.Name;
 
@@ -289,21 +314,41 @@ namespace FileKeywordSearcher
                         }
 
                         // Check keyword in cells
-                        SheetData sheetData = worksheetPart.Worksheet.Elements<SheetData>().FirstOrDefault();
-                        foreach (Row row in sheetData.Elements<Row>())
+                        if (worksheetPart == null || worksheetPart.Worksheet == null)
                         {
-                            foreach (Cell cell in row.Elements<Cell>())
+                            continue; // Skip null worksheet parts or worksheets
+                        }
+                        SheetData sheetData = worksheetPart.Worksheet.Elements<SheetData>().FirstOrDefault();
+                        if (sheetData != null)
+                        {
+                            foreach (Row row in sheetData.Elements<Row>())
                             {
-                                string cellValue = GetCellValue(document, cell);
-
-                                // Check if the cell contains the keyword (case insensitive)
-                                if (cellValue.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                                foreach (Cell cell in row.Elements<Cell>())
                                 {
-                                    string cellAddress = cell.CellReference.ToString();
-                                    if (!keywordCells[sheetName].Contains(cellAddress))
+                                    if (cell == null || cell.CellReference == null)
                                     {
-                                        keywordCells[sheetName].Add(cellAddress);
-                                        bHasKeyWord = true;
+                                        continue; // Skip null cell references
+                                    }
+
+                                    // Get cell value, checking for null
+                                    string cellValue = GetCellValue(document, cell);
+                                    if (cellValue == null)
+                                    {
+                                        continue; // Skip null cell values
+                                    }
+
+                                    // Check if the cell contains the keyword (case insensitive)
+                                    if (cellValue.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                                    {
+                                        string cellAddress = cell.CellReference.ToString();
+                                        if (cellAddress != null)
+                                        {
+                                            if (!keywordCells[sheetName].Contains(cellAddress))
+                                            {
+                                                keywordCells[sheetName].Add(cellAddress);
+                                                bHasKeyWord = true;
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -317,19 +362,23 @@ namespace FileKeywordSearcher
 
                             foreach (var element in shapeElements)
                             {
+                                if (element == null || element.FromMarker == null || element.FromMarker.RowId == null || element.FromMarker.ColumnId == null)
+                                {
+                                    continue; // Skip null elements or markers
+                                }
+
                                 // Get the text content of the shape
                                 var shapeText = element.Descendants<DocumentFormat.OpenXml.Drawing.Text>().Select(t => t.Text).Aggregate(string.Empty, (current, text) => current + text);
 
                                 // Get the start position of the shape
-                                var fromMarker = element.FromMarker;
-                                int fromRow = int.Parse(fromMarker.RowId.Text); // Row index (0-based)
-                                int fromColumn = int.Parse(fromMarker.ColumnId.Text); // Column index (0-based)
+                                int fromRow = int.Parse(element.FromMarker.RowId.Text); // Row index (0-based)
+                                int fromColumn = int.Parse(element.FromMarker.ColumnId.Text); // Column index (0-based)
                                 string shapePosition = $"{GetExcelColumnName(fromColumn + 1)}{fromRow + 1}"; // Convert to 1-based
 
                                 // Check if the shape text contains the keyword (case insensitive)
                                 if (shapeText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
                                 {
-                                    if (!sheetShapes[sheetName].Contains(shapePosition))
+                                    if (sheetShapes.ContainsKey(sheetName) && !sheetShapes[sheetName].Contains(shapePosition))
                                     {
                                         sheetShapes[sheetName].Add(shapePosition);
                                         bHasKeyWord = true;
@@ -349,7 +398,7 @@ namespace FileKeywordSearcher
                     List<string> shapesInSheet = sheetShapes.ContainsKey(sheetName) ? sheetShapes[sheetName] : new List<string>();
 
                     // Combine cells and shapes for the sheet into a single string
-                    string sheetMapping = $"\"{sheetName}\" - Cells: {string.Join(", ", cellsInSheet)}, Shapes: {string.Join(", ", shapesInSheet)}";
+                    string sheetMapping = $"\"{sheetName}\":: Cells({string.Join(", ", cellsInSheet)}), Shapes({string.Join(", ", shapesInSheet)})";
                     resultMappings.Add(sheetMapping);
                 }
 
@@ -360,6 +409,7 @@ namespace FileKeywordSearcher
             {
                 // Handle exceptions such as file not found, access denied, etc.
                 MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
+                return false;
             }
 
             // Return whether the keyword was found or not
@@ -404,7 +454,7 @@ namespace FileKeywordSearcher
             if (bHasKeyword)
             {
                 if (pagesWithKeyword.Count > 1)
-                { 
+                {
                     bHasMultiKeyWord = true;
                 }
                 string newKeywordMapping = string.Join(", ", pagesWithKeyword);

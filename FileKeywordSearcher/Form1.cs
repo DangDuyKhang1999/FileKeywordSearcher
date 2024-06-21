@@ -20,7 +20,7 @@ namespace FileKeywordSearcher
         }
 
         private FileKeywordSearcher fileKeywordSearcher = null!;
-        private ProgressBar progressBar1;
+        private ProgressBar? progressBar1 = null!;
         public Form1()
         {
             InitializeComponent();
@@ -72,10 +72,13 @@ namespace FileKeywordSearcher
                 tableLayoutPanel.Controls.Clear();
                 InitializeProgressBarAndFileProcess();
             }
-
             // Show and start ProgressBar
-            progressBar1.Visible = true;
-            progressBar1.Value = 0;
+            if (progressBar1 != null)
+            {
+                progressBar1.Visible = true;
+                progressBar1.Value = 0;
+            }
+
 
             // Asynchronously call ProcessFiles method
             await Task.Run(() => fileKeywordSearcher.HasKeyWord(txtBrowser.Text));
@@ -148,10 +151,22 @@ namespace FileKeywordSearcher
                             linecode = $"   Line: {fileItem.m_strLineMapping}";
                         }
                     }
-                    else if (fileItem.m_fileExtension == FileExtension.CSV || fileItem.m_fileExtension == FileExtension.Excel)
+                    else if (fileItem.m_fileExtension == FileExtension.CSV)
                     {
 
-                        linecode = $"   Cell: {fileItem.m_strLineMapping}";
+                        if (fileItem.m_bHasMultiKeyWord)
+                        {
+                            linecode = $"   Cells: {fileItem.m_strLineMapping}";
+                        }
+                        else
+                        {
+                            linecode = $"   Cell: {fileItem.m_strLineMapping}";
+                        }
+                    }
+                    else if (fileItem.m_fileExtension == FileExtension.Excel)
+                    {
+
+                        linecode = $"   {fileItem.m_strLineMapping}";
                     }
                     else if (fileItem.m_fileExtension == FileExtension.PDF)
                     {
@@ -381,7 +396,7 @@ namespace FileKeywordSearcher
         private void FileProcessor_ProgressChanged(object sender, int percent)
         {
             // Handle ProgressChanged event from fileProcessor
-            this.Invoke((MethodInvoker)delegate ()
+            _ = this.Invoke((MethodInvoker)delegate ()
             {
                 progressBar1.Value = percent;
                 progressBar1.Refresh(); // Ensure ProgressBar updates visually
