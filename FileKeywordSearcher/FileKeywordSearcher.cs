@@ -286,17 +286,16 @@ namespace FileKeywordSearcher
                     }
 
                     WorkbookPart workbookPart = document.WorkbookPart;
-                    if (workbookPart == null || workbookPart.Workbook == null || workbookPart.Workbook.Sheets == null)
+                    if (workbookPart == null || workbookPart.Workbook.Sheets == null)
                     {
                         MessageBox.Show($"Unable to open or read the Excel document at {filePath}");
                         return false; // Exit early if document or workbook part is null
                     }
-
                     foreach (Sheet sheet in workbookPart.Workbook.Sheets)
                     {
                         if (sheet == null || workbookPart == null)
                         {
-                            continue; // Skip null sheets or workbook parts
+                            return false; // Exit early if document or workbook part is null
                         }
                         WorksheetPart worksheetPart = (WorksheetPart)workbookPart.GetPartById(sheet.Id);
                         string sheetName = sheet.Name;
@@ -316,7 +315,7 @@ namespace FileKeywordSearcher
                         // Check keyword in cells
                         if (worksheetPart == null || worksheetPart.Worksheet == null)
                         {
-                            continue; // Skip null worksheet parts or worksheets
+                            return false; // Exit early if document or workbook part is null
                         }
                         SheetData sheetData = worksheetPart.Worksheet.Elements<SheetData>().FirstOrDefault();
                         if (sheetData != null)
@@ -325,28 +324,26 @@ namespace FileKeywordSearcher
                             {
                                 foreach (Cell cell in row.Elements<Cell>())
                                 {
-                                    if (cell == null || cell.CellReference == null)
+                                    if (cell != null && cell.CellReference != null)
                                     {
-                                        continue; // Skip null cell references
-                                    }
-
-                                    // Get cell value, checking for null
-                                    string cellValue = GetCellValue(document, cell);
-                                    if (cellValue == null)
-                                    {
-                                        continue; // Skip null cell values
-                                    }
-
-                                    // Check if the cell contains the keyword (case insensitive)
-                                    if (cellValue.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
-                                    {
-                                        string cellAddress = cell.CellReference.ToString();
-                                        if (cellAddress != null)
+                                        // Get cell value, checking for null
+                                        string cellValue = GetCellValue(document, cell);
+                                        if (cellValue == null)
                                         {
-                                            if (!keywordCells[sheetName].Contains(cellAddress))
+                                            continue; // Skip null cell values
+                                        }
+
+                                        // Check if the cell contains the keyword (case insensitive)
+                                        if (cellValue.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                                        {
+                                            string cellAddress = cell.CellReference.ToString();
+                                            if (cellAddress != null)
                                             {
-                                                keywordCells[sheetName].Add(cellAddress);
-                                                bHasKeyWord = true;
+                                                if (!keywordCells[sheetName].Contains(cellAddress))
+                                                {
+                                                    keywordCells[sheetName].Add(cellAddress);
+                                                    bHasKeyWord = true;
+                                                }
                                             }
                                         }
                                     }
@@ -362,26 +359,25 @@ namespace FileKeywordSearcher
 
                             foreach (var element in shapeElements)
                             {
-                                if (element == null || element.FromMarker == null || element.FromMarker.RowId == null || element.FromMarker.ColumnId == null)
-                                {
-                                    continue; // Skip null elements or markers
-                                }
-
                                 // Get the text content of the shape
                                 var shapeText = element.Descendants<DocumentFormat.OpenXml.Drawing.Text>().Select(t => t.Text).Aggregate(string.Empty, (current, text) => current + text);
 
                                 // Get the start position of the shape
-                                int fromRow = int.Parse(element.FromMarker.RowId.Text); // Row index (0-based)
-                                int fromColumn = int.Parse(element.FromMarker.ColumnId.Text); // Column index (0-based)
-                                string shapePosition = $"{GetExcelColumnName(fromColumn + 1)}{fromRow + 1}"; // Convert to 1-based
-
-                                // Check if the shape text contains the keyword (case insensitive)
-                                if (shapeText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                                var fromMarker = element.FromMarker;
+                                if (fromMarker != null && fromMarker.RowId != null && fromMarker.ColumnId != null)
                                 {
-                                    if (sheetShapes.ContainsKey(sheetName) && !sheetShapes[sheetName].Contains(shapePosition))
+                                    int fromRow = int.Parse(fromMarker.RowId.Text); // Row index (0-based)
+                                    int fromColumn = int.Parse(fromMarker.ColumnId.Text); // Column index (0-based)
+                                    string shapePosition = $"{GetExcelColumnName(fromColumn + 1)}{fromRow + 1}"; // Convert to 1-based
+
+                                    // Check if the shape text contains the keyword (case insensitive)
+                                    if (shapeText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
                                     {
-                                        sheetShapes[sheetName].Add(shapePosition);
-                                        bHasKeyWord = true;
+                                        if (sheetShapes.ContainsKey(sheetName) && !sheetShapes[sheetName].Contains(shapePosition))
+                                        {
+                                            sheetShapes[sheetName].Add(shapePosition);
+                                            bHasKeyWord = true;
+                                        }
                                     }
                                 }
                             }
@@ -409,7 +405,6 @@ namespace FileKeywordSearcher
             {
                 // Handle exceptions such as file not found, access denied, etc.
                 MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
-                return false;
             }
 
             // Return whether the keyword was found or not

@@ -21,6 +21,7 @@ namespace FileKeywordSearcher
 
         private FileKeywordSearcher fileKeywordSearcher = null!;
         private ProgressBar? progressBar1 = null!;
+        private TextBox? txtProgressPercent = null!;
         public Form1()
         {
             InitializeComponent();
@@ -354,20 +355,38 @@ namespace FileKeywordSearcher
         private void InitializeProgressBarAndFileProcess()
         {
             // Initialize ProgressBar
-            progressBar1 = new ProgressBar();
-            progressBar1.Minimum = 0;
-            progressBar1.Maximum = 100;
-            progressBar1.Step = 1;
-            progressBar1.Visible = false;
-            progressBar1.Height = ClientRectangle.Height / 15;
-            UpdateProgressBarWidth(); // Cập nhật chiều rộng của ProgressBar ban đầu
-            UpdateProgressBarPosition(); // Cập nhật vị trí của ProgressBar ban đầu
+            progressBar1 = new ProgressBar
+            {
+                Minimum = 0,
+                Maximum = 100,
+                Step = 1,
+                Visible = false,
+                Height = ClientRectangle.Height / 15
+            };
 
-            // Add ProgressBar to Form
+            // Initialize TextBox
+            txtProgressPercent = new TextBox
+            {
+                Multiline = true,
+                AutoSize = false,
+                TextAlign = HorizontalAlignment.Center,
+                BorderStyle = BorderStyle.None,
+                Height = progressBar1.Height,
+                Width = 50,
+                BackColor = Color.FromArgb(190, 217, 217)
+            };
+
+            //Position
+            UpdateProgressBarWidth();
+            UpdateProgressBarPosition();
+
+            // Add controls to Form
             this.Controls.Add(progressBar1);
+            this.Controls.Add(txtProgressPercent);
 
             // Bring ProgressBar to front
             progressBar1.BringToFront();
+            txtProgressPercent.BringToFront();
 
             // Initialize FileProcess instance and subscribe to ProgressChanged event
             fileKeywordSearcher.ProgressChanged += FileProcessor_ProgressChanged;
@@ -377,18 +396,21 @@ namespace FileKeywordSearcher
         {
             if (progressBar1 != null)
             {
-                progressBar1.Width = ClientRectangle.Width - 50;
+                progressBar1.Width = ClientRectangle.Width - 100;
                 progressBar1.Height = ClientRectangle.Height / 15;
+                txtProgressPercent.Height = progressBar1.Height;
             }
         }
         private void UpdateProgressBarPosition()
         {
-            if (progressBar1 != null)
+            if (progressBar1 != null && txtProgressPercent != null)
             {
                 int progressBarHeight = progressBar1.Height;
                 int progressBarY = (ClientRectangle.Height - progressBarHeight) / 2;
 
                 progressBar1.Location = new Point((ClientRectangle.Width - progressBar1.Width) / 2, progressBarY);
+                txtProgressPercent.Location = new Point(progressBar1.Width + 40, progressBarY);
+
             }
         }
 
@@ -400,7 +422,7 @@ namespace FileKeywordSearcher
             {
                 progressBar1.Value = percent;
                 progressBar1.Refresh(); // Ensure ProgressBar updates visually
-
+                txtProgressPercent.Text = percent.ToString() + "%";
                 // Check if progress is complete (100%)
                 if (percent >= 100)
                 {
@@ -412,8 +434,11 @@ namespace FileKeywordSearcher
                         timer.Stop();
                         progressBar1.Visible = false;
                         progressBar1 = null;
+                        txtProgressPercent.Visible = false;
+                        txtProgressPercent = null;
                         // Remove ProgressBar from Form
                         this.Controls.Remove(progressBar1);
+                        this.Controls.Remove(txtProgressPercent);
                         InitializeTableLayoutResult();
 
                         // Optionally unsubscribe from ProgressChanged event to prevent further updates
