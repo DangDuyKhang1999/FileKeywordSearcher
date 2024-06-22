@@ -21,9 +21,9 @@ namespace FileKeywordSearcher
 
         private FileKeywordSearcher fileKeywordSearcher = null!;
         private ProgressBar? progressBar1 = null!;
-        private TextBox? txtProgressPercent = null!;
-        private TextBox? txtProgressDetail = null!;
-        private TextBox? txtProgressFileHasKeyWord = null!;
+        private Label? txtProgressPercent = null!;
+        private Label? txtProgressDetail = null!;
+        private Label? txtProgressFileHasKeyWord = null!;
         public Form1()
         {
             InitializeComponent();
@@ -81,7 +81,10 @@ namespace FileKeywordSearcher
                 progressBar1.Visible = true;
                 progressBar1.Value = 0;
             }
-
+            UpdateControlSizesAndLocations();
+            UpdateProgressBarWidth();
+            UpdateProgressBarPosition();
+            UpdateProgressBarFont();
             // Asynchronously call ProcessFiles method
             await Task.Run(() => fileKeywordSearcher.HasKeyWord(txtBrowser.Text));
         }
@@ -363,33 +366,35 @@ namespace FileKeywordSearcher
                 Maximum = 100,
                 Step = 1,
                 Visible = false,
-                Height = ClientRectangle.Height / 15
-            };
+                Height = ClientRectangle.Height / 15,
+        };
 
             // Initialize TextBox Progress Precent
-            txtProgressPercent = new TextBox
+            txtProgressPercent = new Label
             {
-                TextAlign = HorizontalAlignment.Center,
+                TextAlign = ContentAlignment.MiddleCenter,
                 BorderStyle = BorderStyle.None,
                 Height = progressBar1.Height,
                 Width = progressBar1.Width,
                 BackColor = Color.FromArgb(190, 217, 217),
             };
             // Initialize TextBox Progress Detail
-            txtProgressDetail = new TextBox
+            txtProgressDetail = new Label
             {
-                TextAlign = HorizontalAlignment.Left,
+                TextAlign = ContentAlignment.MiddleLeft,
                 BorderStyle = BorderStyle.None,
+                AutoSize = true,
                 Height = progressBar1.Height,
-                Width = progressBar1.Width/2,
+                Width = progressBar1.Width / 2,
                 BackColor = Color.FromArgb(190, 217, 217),
             };
 
             // Initialize TextBox File Path
-            txtProgressFileHasKeyWord = new TextBox
+            txtProgressFileHasKeyWord = new Label
             {
-                TextAlign = HorizontalAlignment.Right,
+                TextAlign = ContentAlignment.MiddleRight,
                 BorderStyle = BorderStyle.None,
+                AutoSize = true,
                 Height = progressBar1.Height,
                 Width = progressBar1.Width / 2,
                 BackColor = Color.FromArgb(190, 217, 217),
@@ -423,8 +428,8 @@ namespace FileKeywordSearcher
                 progressBar1.Width = ClientRectangle.Width - 50;
                 progressBar1.Height = ClientRectangle.Height / 15;
                 txtProgressPercent.Width = progressBar1.Width;
-                txtProgressDetail.Width = progressBar1.Width/2;
-                txtProgressFileHasKeyWord.Width = progressBar1.Width/2;
+                txtProgressDetail.Width = progressBar1.Width / 2;
+                txtProgressFileHasKeyWord.Width = progressBar1.Width / 2;
             }
         }
         private void UpdateProgressBarPosition()
@@ -432,13 +437,13 @@ namespace FileKeywordSearcher
             if (progressBar1 != null && txtProgressPercent != null && txtProgressDetail != null && txtProgressFileHasKeyWord != null)
             {
                 int progressBarHeight = progressBar1.Height;
-                int progressBarX = (ClientRectangle.Width - progressBar1.Width)/2;
+                int progressBarX = (ClientRectangle.Width - progressBar1.Width) / 2;
                 int progressBarY = (ClientRectangle.Height - progressBarHeight) / 2;
 
                 progressBar1.Location = new Point(progressBarX, progressBarY);
                 txtProgressPercent.Location = new Point(progressBarX, progressBarY - txtProgressPercent.Height - 10);
                 txtProgressDetail.Location = new Point(progressBarX, progressBarY + progressBar1.Height);
-                txtProgressFileHasKeyWord.Location = new Point(progressBarX + progressBar1.Width/2, progressBarY + progressBar1.Height);
+                txtProgressFileHasKeyWord.Location = new Point(progressBarX + progressBar1.Width / 2, progressBarY + progressBar1.Height);
             }
         }
 
@@ -446,7 +451,7 @@ namespace FileKeywordSearcher
         {
             if (progressBar1 != null && txtProgressPercent != null && txtProgressDetail != null && txtProgressFileHasKeyWord != null)
             {
-                Font font =  new Font("Segoe UI", progressBar1.Height / 2, FontStyle.Bold, GraphicsUnit.Point);
+                Font font = new Font("Segoe UI", progressBar1.Height / 2, FontStyle.Bold, GraphicsUnit.Point);
                 txtProgressDetail.Font = font;
                 txtProgressPercent.Font = font;
                 txtProgressFileHasKeyWord.Font = font;
@@ -469,7 +474,7 @@ namespace FileKeywordSearcher
                 {
                     // Remove ProgressBar from Form
                     System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
-                    timer.Interval = 1000;
+                    timer.Interval = 500;
                     timer.Tick += (s, e) =>
                     {
                         timer.Stop();
