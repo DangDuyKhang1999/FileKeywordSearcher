@@ -22,14 +22,15 @@ namespace FileKeywordSearcher
         private FileKeywordSearcher fileKeywordSearcher = null!;
         private ProgressBar? progressBar1 = null!;
         private TextBox? txtProgressPercent = null!;
-        private TextBox? txtFilePath = null!;
+        private TextBox? txtProgressDetail = null!;
+        private TextBox? txtProgressFileHasKeyWord = null!;
         public Form1()
         {
             InitializeComponent();
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             StartPosition = FormStartPosition.CenterScreen;
             Resize += Form1_SizeChanged;
-            SizeChanged += (sender, e) => { UpdateProgressBarWidth(); UpdateProgressBarPosition(); };
+            SizeChanged += (sender, e) => { UpdateProgressBarWidth(); UpdateProgressBarPosition(); UpdateProgressBarFont(); };
         }
 
         private void btnBrowser_Click(object sender, EventArgs e)
@@ -80,7 +81,6 @@ namespace FileKeywordSearcher
                 progressBar1.Visible = true;
                 progressBar1.Value = 0;
             }
-
 
             // Asynchronously call ProcessFiles method
             await Task.Run(() => fileKeywordSearcher.HasKeyWord(txtBrowser.Text));
@@ -375,13 +375,23 @@ namespace FileKeywordSearcher
                 Width = progressBar1.Width,
                 BackColor = Color.FromArgb(190, 217, 217),
             };
-            // Initialize TextBox File Path
-            txtFilePath = new TextBox
+            // Initialize TextBox Progress Detail
+            txtProgressDetail = new TextBox
             {
-                TextAlign = HorizontalAlignment.Center,
+                TextAlign = HorizontalAlignment.Left,
                 BorderStyle = BorderStyle.None,
                 Height = progressBar1.Height,
-                Width = progressBar1.Width,
+                Width = progressBar1.Width/2,
+                BackColor = Color.FromArgb(190, 217, 217),
+            };
+
+            // Initialize TextBox File Path
+            txtProgressFileHasKeyWord = new TextBox
+            {
+                TextAlign = HorizontalAlignment.Right,
+                BorderStyle = BorderStyle.None,
+                Height = progressBar1.Height,
+                Width = progressBar1.Width / 2,
                 BackColor = Color.FromArgb(190, 217, 217),
             };
 
@@ -393,12 +403,14 @@ namespace FileKeywordSearcher
             // Add controls to Form
             this.Controls.Add(progressBar1);
             this.Controls.Add(txtProgressPercent);
-            this.Controls.Add(txtFilePath);
+            this.Controls.Add(txtProgressDetail);
+            this.Controls.Add(txtProgressFileHasKeyWord);
 
             // Bring ProgressBar to front
             progressBar1.BringToFront();
             txtProgressPercent.BringToFront();
-            txtFilePath.BringToFront();
+            txtProgressDetail.BringToFront();
+            txtProgressFileHasKeyWord.BringToFront();
 
             // Initialize FileProcess instance and subscribe to ProgressChanged event
             fileKeywordSearcher.ProgressChanged += FileProcessor_ProgressChanged;
@@ -406,40 +418,43 @@ namespace FileKeywordSearcher
 
         private void UpdateProgressBarWidth()
         {
-            if (progressBar1 != null && txtFilePath != null)
+            if (progressBar1 != null && txtProgressPercent != null && txtProgressDetail != null && txtProgressFileHasKeyWord != null)
             {
                 progressBar1.Width = ClientRectangle.Width - 50;
                 progressBar1.Height = ClientRectangle.Height / 15;
-                txtFilePath.Width = progressBar1.Width;
                 txtProgressPercent.Width = progressBar1.Width;
+                txtProgressDetail.Width = progressBar1.Width/2;
+                txtProgressFileHasKeyWord.Width = progressBar1.Width/2;
             }
         }
         private void UpdateProgressBarPosition()
         {
-            if (progressBar1 != null && txtProgressPercent != null && txtFilePath != null)
+            if (progressBar1 != null && txtProgressPercent != null && txtProgressDetail != null && txtProgressFileHasKeyWord != null)
             {
                 int progressBarHeight = progressBar1.Height;
-                int progressBarX = ClientRectangle.Width - progressBar1.Width;
+                int progressBarX = (ClientRectangle.Width - progressBar1.Width)/2;
                 int progressBarY = (ClientRectangle.Height - progressBarHeight) / 2;
 
-                progressBar1.Location = new Point(progressBarX / 2, progressBarY);
+                progressBar1.Location = new Point(progressBarX, progressBarY);
                 txtProgressPercent.Location = new Point(progressBarX, progressBarY - txtProgressPercent.Height - 10);
-                txtFilePath.Location = new Point(progressBarX / 2, progressBarY + progressBar1.Height * 2);
+                txtProgressDetail.Location = new Point(progressBarX, progressBarY + progressBar1.Height);
+                txtProgressFileHasKeyWord.Location = new Point(progressBarX + progressBar1.Width/2, progressBarY + progressBar1.Height);
             }
         }
 
         private void UpdateProgressBarFont()
         {
-            if (progressBar1 != null && txtProgressPercent != null && txtFilePath != null)
+            if (progressBar1 != null && txtProgressPercent != null && txtProgressDetail != null && txtProgressFileHasKeyWord != null)
             {
                 Font font =  new Font("Segoe UI", progressBar1.Height / 2, FontStyle.Bold, GraphicsUnit.Point);
-                txtFilePath.Font = font;
+                txtProgressDetail.Font = font;
                 txtProgressPercent.Font = font;
+                txtProgressFileHasKeyWord.Font = font;
             }
         }
 
 
-        private void FileProcessor_ProgressChanged(object sender, (int percent, string filePath) e)
+        private void FileProcessor_ProgressChanged(object sender, (int percent, int iFileCount, int iTotalFileCount, int iFileHasKeyWord) e)
         {
             // Handle ProgressChanged event from fileProcessor
             _ = this.Invoke((MethodInvoker)delegate ()
@@ -447,7 +462,8 @@ namespace FileKeywordSearcher
                 progressBar1.Value = e.percent;
                 progressBar1.Refresh(); // Ensure ProgressBar updates visually
                 txtProgressPercent.Text = e.percent.ToString() + "%";
-                txtFilePath.Text = e.filePath;
+                txtProgressDetail.Text = e.iFileCount.ToString() + "/" + e.iTotalFileCount.ToString();
+                txtProgressFileHasKeyWord.Text = "Files containing keyword: " + e.iFileHasKeyWord.ToString();
                 // Check if progress is complete (100%)
                 if (e.percent >= 100)
                 {
@@ -457,16 +473,24 @@ namespace FileKeywordSearcher
                     timer.Tick += (s, e) =>
                     {
                         timer.Stop();
+
                         progressBar1.Visible = false;
                         progressBar1 = null;
+
                         txtProgressPercent.Visible = false;
                         txtProgressPercent = null;
-                        txtFilePath.Visible = false;
-                        txtFilePath = null;
+
+                        txtProgressDetail.Visible = false;
+                        txtProgressDetail = null;
+
+                        txtProgressFileHasKeyWord.Visible = false;
+                        txtProgressFileHasKeyWord = null;
+
                         // Remove ProgressBar from Form
                         this.Controls.Remove(progressBar1);
                         this.Controls.Remove(txtProgressPercent);
-                        this.Controls.Remove(txtFilePath);
+                        this.Controls.Remove(txtProgressDetail);
+                        this.Controls.Remove(txtProgressFileHasKeyWord);
                         InitializeTableLayoutResult();
                         ControlsStatus(true);
 
@@ -486,6 +510,10 @@ namespace FileKeywordSearcher
                 txtBrowser.Enabled = true;
                 btnBrowser.Enabled = true;
                 btnStartSearch.Enabled = true;
+                txtKeyWord.BackColor = Color.FromArgb(137, 190, 179);
+                txtBrowser.BackColor = Color.FromArgb(137, 190, 179);
+                btnBrowser.BackColor = Color.FromArgb(137, 190, 179);
+                btnStartSearch.BackColor = Color.FromArgb(137, 190, 179);
             }
             else
             {
@@ -493,6 +521,10 @@ namespace FileKeywordSearcher
                 txtBrowser.Enabled = false;
                 btnBrowser.Enabled = false;
                 btnStartSearch.Enabled = false;
+                txtKeyWord.BackColor = Color.LightGray;
+                txtBrowser.BackColor = Color.LightGray;
+                btnBrowser.BackColor = Color.LightGray;
+                btnStartSearch.BackColor = Color.LightGray;
             }
         }
 

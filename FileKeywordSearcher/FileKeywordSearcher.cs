@@ -15,10 +15,10 @@ namespace FileKeywordSearcher
         public string m_strKeyWord { get; set; }
         public int m_iFileCount { get; set; }
         public int m_iTotalFileCount { get; set; }
+        public List<FileItem> m_fileItems { get; set; } = new List<FileItem>();
 
-        private List<FileItem> m_fileItems = new List<FileItem>();
 
-        public event EventHandler<(int percent, string filePath)> ProgressChanged;
+        public event EventHandler<(int percent, int iFileCount, int iTotalFileCount, int iFileHasKeyWord)> ProgressChanged;
 
         public FileKeywordSearcher(string strBrowser, string strKeyWord)
         {
@@ -34,7 +34,7 @@ namespace FileKeywordSearcher
         }
         protected virtual void OnProgressChanged(int percent, string filePath)
         {
-            ProgressChanged?.Invoke(this, (percent, filePath)); // Trigger the ProgressChanged event with percent and filePath
+            ProgressChanged?.Invoke(this, (percent, m_iFileCount, m_iTotalFileCount, m_fileItems.Count)); // Trigger the ProgressChanged event with percent and filePath
         }
 
         public bool HasKeyWord(string directoryPath)
