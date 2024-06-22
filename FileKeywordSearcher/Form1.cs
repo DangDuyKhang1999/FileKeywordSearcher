@@ -381,22 +381,20 @@ namespace FileKeywordSearcher
             // Initialize TextBox Progress Detail
             txtProgressDetail = new Label
             {
-                TextAlign = ContentAlignment.MiddleLeft,
+                TextAlign = ContentAlignment.TopLeft,
                 BorderStyle = BorderStyle.None,
-                AutoSize = true,
                 Height = progressBar1.Height,
-                Width = progressBar1.Width / 2,
+                Width = progressBar1.Width,
                 BackColor = Color.FromArgb(190, 217, 217),
             };
 
             // Initialize TextBox File Path
             txtProgressFileHasKeyWord = new Label
             {
-                TextAlign = ContentAlignment.MiddleRight,
+                TextAlign = ContentAlignment.TopRight,
                 BorderStyle = BorderStyle.None,
-                AutoSize = true,
                 Height = progressBar1.Height,
-                Width = progressBar1.Width / 2,
+                Width = progressBar1.Width,
                 BackColor = Color.FromArgb(190, 217, 217),
             };
 
@@ -427,9 +425,15 @@ namespace FileKeywordSearcher
             {
                 progressBar1.Width = ClientRectangle.Width - 50;
                 progressBar1.Height = ClientRectangle.Height / 15;
+
                 txtProgressPercent.Width = progressBar1.Width;
+                txtProgressPercent.Height = progressBar1.Height;
+
                 txtProgressDetail.Width = progressBar1.Width / 2;
+                txtProgressDetail.Height = progressBar1.Height + 20;
+
                 txtProgressFileHasKeyWord.Width = progressBar1.Width / 2;
+                txtProgressFileHasKeyWord.Height = progressBar1.Height + 20;
             }
         }
         private void UpdateProgressBarPosition()
