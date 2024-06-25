@@ -72,7 +72,11 @@ namespace FileKeywordSearcher
                         break;
 
                     case FileExtension.WORD:
-                        keywordFound = CheckWordForKeywordAndShapes(file, ref strLineMapping);
+                        keywordFound = CheckWordForKeywordAndShapes(file);
+                        break;
+
+                    case FileExtension.WORD_RTF:
+                        keywordFound = CheckFileForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
                         break;
                 }
 
@@ -494,7 +498,7 @@ namespace FileKeywordSearcher
         }
 
         //WORD ---------->
-        public bool CheckWordForKeywordAndShapes(string filePath, ref string strMapping)
+        public bool CheckWordForKeywordAndShapes(string filePath)
         {
             bool bHasKeyWord = false;
             Dictionary<string, List<string>> keywordTexts = new Dictionary<string, List<string>>();
@@ -543,12 +547,6 @@ namespace FileKeywordSearcher
                         }
                     }
                 }
-
-                // Set strMapping based on whether keyword was found or not
-                if (bHasKeyWord)
-                {
-                    strMapping = "Has keyword";
-                }
             }
             catch (Exception ex)
             {
@@ -571,6 +569,7 @@ namespace FileKeywordSearcher
                 ".xlsx" => FileExtension.Excel, // Microsoft Excel Spreadsheet
                 ".docx" => FileExtension.WORD, // Microsoft Word document
                 ".docm" => FileExtension.WORD, // Microsoft Word document with macros
+                ".rtf" => FileExtension.WORD_RTF, // Microsoft Word document in Rich Text Format (RTF)
                 ".csv" => FileExtension.CSV, // Comma-Separated Values
                 ".pdf" => FileExtension.PDF, // Portable Document Format
                 // Ignored Extension ----------->

@@ -17,6 +17,7 @@ namespace FileKeywordSearcher
             CSV,
             Excel,
             WORD,
+            WORD_RTF,
             PDF,
             IgnoredExtension,
         }
@@ -186,9 +187,9 @@ namespace FileKeywordSearcher
                             linecode = $"   Page: {fileItem.m_strLineMapping}";
                         }
                     }
-                    else if (fileItem.m_fileExtension == FileExtension.WORD)
+                    else if (fileItem.m_fileExtension == FileExtension.WORD || fileItem.m_fileExtension == FileExtension.WORD_RTF)
                     {
-                            linecode = $"   {fileItem.m_strLineMapping}";
+                            linecode = $"   Keyword detected in the file";
                     }
 
                     RichTextBox rtItem = new()
