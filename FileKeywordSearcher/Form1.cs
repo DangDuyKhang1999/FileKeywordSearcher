@@ -16,7 +16,9 @@ namespace FileKeywordSearcher
             Normal,
             CSV,
             Excel,
+            WORD,
             PDF,
+            IgnoredExtension,
         }
 
         private FileKeywordSearcher fileKeywordSearcher = null!;
@@ -183,6 +185,10 @@ namespace FileKeywordSearcher
                         {
                             linecode = $"   Page: {fileItem.m_strLineMapping}";
                         }
+                    }
+                    else if (fileItem.m_fileExtension == FileExtension.WORD)
+                    {
+                            linecode = $"   {fileItem.m_strLineMapping}";
                     }
 
                     RichTextBox rtItem = new()

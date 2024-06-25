@@ -6,6 +6,10 @@ using Path = System.IO.Path;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Drawing.Spreadsheet;
+using DocumentFormat.OpenXml.Wordprocessing;
+using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Drawing.Wordprocessing;
+using DocumentFormat.OpenXml.Drawing;
 
 namespace FileKeywordSearcher
 {
@@ -65,6 +69,10 @@ namespace FileKeywordSearcher
 
                     case FileExtension.PDF:
                         keywordFound = CheckPDFForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
+                        break;
+
+                    case FileExtension.WORD:
+                        keywordFound = CheckWordForKeywordAndShapes(file, ref strLineMapping);
                         break;
                 }
 
@@ -411,7 +419,7 @@ namespace FileKeywordSearcher
                         sheetMapping += (shapesInSheet.Count > 1) ? $"Shapes({string.Join(", ", shapesInSheet)})" : $"Shape({shapesInSheet[0]})";
                         bHasKeyWordInSheet = true;
                     }
-                    if(bHasKeyWordInSheet) { resultMappings.Add(sheetMapping); }
+                    if (bHasKeyWordInSheet) { resultMappings.Add(sheetMapping); }
                 }
 
                 // Update strMapping with the combined mappings
@@ -485,6 +493,75 @@ namespace FileKeywordSearcher
             return bHasKeyword;
         }
 
+        //WORD ---------->
+        public bool CheckWordForKeywordAndShapes(string filePath, ref string strMapping)
+        {
+            bool bHasKeyWord = false;
+            Dictionary<string, List<string>> keywordTexts = new Dictionary<string, List<string>>();
+            Dictionary<string, List<string>> shapePositions = new Dictionary<string, List<string>>();
+
+            try
+            {
+                // Open the Word document
+                using (WordprocessingDocument document = WordprocessingDocument.Open(filePath, false))
+                {
+                    if (document == null || document.MainDocumentPart == null)
+                    {
+                        MessageBox.Show($"Unable to open or read the Word document at {filePath}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return false; // Exit early if document or main part is null
+                    }
+
+                    MainDocumentPart mainPart = document.MainDocumentPart;
+
+                    // Iterate through paragraphs to check for keyword
+                    foreach (var paragraph in mainPart.Document.Body.Elements<DocumentFormat.OpenXml.Wordprocessing.Paragraph>())
+                    {
+                        string paragraphText = paragraph.InnerText;
+
+                        // Check if paragraph contains the keyword (case insensitive)
+                        if (paragraphText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            bHasKeyWord = true;
+                            break; // Exit loop early if keyword is found
+                        }
+                    }
+
+                    // Iterate through drawings to check for shapes
+                    foreach (var drawing in mainPart.Document.Body.Descendants<DocumentFormat.OpenXml.Wordprocessing.Drawing>())
+                    {
+                        var inline = drawing.Inline;
+
+                        // Check if the drawing contains text and if that text contains the keyword
+                        if (inline != null)
+                        {
+                            var drawingText = inline.Descendants<DocumentFormat.OpenXml.Wordprocessing.Text>().Select(t => t.Text).Aggregate(string.Empty, (current, text) => current + text);
+                            if (drawingText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                bHasKeyWord = true;
+                                break; // Exit loop early if keyword is found
+                            }
+                        }
+                    }
+                }
+
+                // Set strMapping based on whether keyword was found or not
+                if (bHasKeyWord)
+                {
+                    strMapping = "Has keyword";
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions such as file not found, access denied, etc.
+                MessageBox.Show($"Error reading file {filePath}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
+            // Return whether the keyword was found or not
+            return bHasKeyWord;
+        }
+        //WORD <----------
+
         private FileExtension GetFileExtension(string fileName)
         {
             string extension = Path.GetExtension(fileName).ToLowerInvariant();
@@ -492,6 +569,8 @@ namespace FileKeywordSearcher
             {
                 ".xls" => FileExtension.Excel, // Microsoft Excel Spreadsheet (Legacy)
                 ".xlsx" => FileExtension.Excel, // Microsoft Excel Spreadsheet
+                ".docx" => FileExtension.WORD, // Microsoft Word document
+                ".docm" => FileExtension.WORD, // Microsoft Word document with macros
                 ".csv" => FileExtension.CSV, // Comma-Separated Values
                 ".pdf" => FileExtension.PDF, // Portable Document Format
                 // Ignored Extension ----------->
