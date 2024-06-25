@@ -490,10 +490,54 @@ namespace FileKeywordSearcher
             string extension = Path.GetExtension(fileName).ToLowerInvariant();
             return extension switch
             {
-                ".xls" => FileExtension.Excel,
-                ".xlsx" => FileExtension.Excel,
-                ".csv" => FileExtension.CSV,
-                ".pdf" => FileExtension.PDF,
+                ".xls" => FileExtension.Excel, // Microsoft Excel Spreadsheet (Legacy)
+                ".xlsx" => FileExtension.Excel, // Microsoft Excel Spreadsheet
+                ".csv" => FileExtension.CSV, // Comma-Separated Values
+                ".pdf" => FileExtension.PDF, // Portable Document Format
+                // Ignored Extension ----------->
+                ".exe" => FileExtension.IgnoredExtension, // Executable File
+                ".nupkg" => FileExtension.IgnoredExtension, // NuGet Package
+                ".dll" => FileExtension.IgnoredExtension, // Dynamic Link Library
+                ".bin" => FileExtension.IgnoredExtension, // Binary File
+                ".img" => FileExtension.IgnoredExtension, // Disk Image File
+                ".iso" => FileExtension.IgnoredExtension, // Optical Disc Image
+                ".jpg" => FileExtension.IgnoredExtension, // JPEG Image
+                ".jpeg" => FileExtension.IgnoredExtension, // JPEG Image 
+                ".png" => FileExtension.IgnoredExtension, // Portable Network Graphics
+                ".gif" => FileExtension.IgnoredExtension, // Graphics Interchange Format
+                ".bmp" => FileExtension.IgnoredExtension, // Bitmap Image
+                ".tiff" => FileExtension.IgnoredExtension, // Tagged Image File Format
+                ".mp3" => FileExtension.IgnoredExtension, // MPEG Audio Layer III
+                ".wav" => FileExtension.IgnoredExtension, // Waveform Audio File Format
+                ".flac" => FileExtension.IgnoredExtension, // Free Lossless Audio Codec
+                ".aac" => FileExtension.IgnoredExtension, // Advanced Audio Codec
+                ".ogg" => FileExtension.IgnoredExtension, // Ogg Vorbis
+                ".mp4" => FileExtension.IgnoredExtension, // MPEG-4 Video
+                ".mkv" => FileExtension.IgnoredExtension, // Matroska Video
+                ".avi" => FileExtension.IgnoredExtension, // Audio Video Interleave
+                ".mov" => FileExtension.IgnoredExtension, // QuickTime Movie
+                ".wmv" => FileExtension.IgnoredExtension, // Windows Media Video
+                ".zip" => FileExtension.IgnoredExtension, // ZIP Archive
+                ".rar" => FileExtension.IgnoredExtension, // RAR Archive
+                ".7z" => FileExtension.IgnoredExtension, // 7-Zip Archive
+                ".tar.gz" => FileExtension.IgnoredExtension, // Compressed Archive File
+                ".db" => FileExtension.IgnoredExtension, // Database File
+                ".mdb" => FileExtension.IgnoredExtension, // Microsoft Access Database
+                ".sqlite" => FileExtension.IgnoredExtension, // SQLite Database
+                ".psd" => FileExtension.IgnoredExtension, // Adobe Photoshop Document
+                ".ai" => FileExtension.IgnoredExtension, // Adobe Illustrator Document
+                ".dwg" => FileExtension.IgnoredExtension, // AutoCAD Drawing
+                ".sys" => FileExtension.IgnoredExtension, // System File
+                ".dat" => FileExtension.IgnoredExtension, // Data File
+                ".wma" => FileExtension.IgnoredExtension, // Windows Media Audio
+                ".ps" => FileExtension.IgnoredExtension, // PostScript File
+                ".key" => FileExtension.IgnoredExtension, // Keynote Presentation
+                ".odt" => FileExtension.IgnoredExtension, // OpenDocument Text Document
+                ".ods" => FileExtension.IgnoredExtension, // OpenDocument Spreadsheet
+                ".odp" => FileExtension.IgnoredExtension, // OpenDocument Presentation
+                ".dwf" => FileExtension.IgnoredExtension, // Design Web Format
+                ".jar" => FileExtension.IgnoredExtension, // Java Archive
+                // ----------->
                 _ => FileExtension.Normal
             };
         }
