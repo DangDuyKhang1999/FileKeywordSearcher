@@ -16,8 +16,10 @@ namespace FileKeywordSearcher
             Normal,
             CSV,
             Excel,
-            WORD,
-            WORD_RTF,
+            Word,
+            Word_RTF,
+            PowerPoint,
+            PowerPoint_old,
             PDF,
             IgnoredExtension,
         }
@@ -187,9 +189,13 @@ namespace FileKeywordSearcher
                             linecode = $"   Page: {fileItem.m_strLineMapping}";
                         }
                     }
-                    else if (fileItem.m_fileExtension == FileExtension.WORD || fileItem.m_fileExtension == FileExtension.WORD_RTF)
+                    else if (fileItem.m_fileExtension == FileExtension.Word || fileItem.m_fileExtension == FileExtension.Word_RTF)
                     {
-                            linecode = $"   Keyword detected in the file";
+                        linecode = $"   Keyword detected in the file";
+                    }
+                    else if (fileItem.m_fileExtension == FileExtension.PowerPoint)
+                    {
+                        linecode = $"   Keyword detected in the file";
                     }
 
                     RichTextBox rtItem = new()
@@ -374,7 +380,7 @@ namespace FileKeywordSearcher
                 Step = 1,
                 Visible = false,
                 Height = ClientRectangle.Height / 15,
-        };
+            };
 
             // Initialize TextBox Progress Precent
             txtProgressPercent = new Label

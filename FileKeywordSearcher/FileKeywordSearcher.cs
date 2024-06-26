@@ -10,6 +10,9 @@ using DocumentFormat.OpenXml.Wordprocessing;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Drawing.Wordprocessing;
 using DocumentFormat.OpenXml.Drawing;
+using DocumentFormat.OpenXml.Presentation;
+
+
 
 namespace FileKeywordSearcher
 {
@@ -71,12 +74,16 @@ namespace FileKeywordSearcher
                         keywordFound = CheckPDFForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
                         break;
 
-                    case FileExtension.WORD:
+                    case FileExtension.Word:
                         keywordFound = CheckWordForKeywordAndShapes(file);
                         break;
 
-                    case FileExtension.WORD_RTF:
+                    case FileExtension.Word_RTF:
                         keywordFound = CheckFileForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
+                        break;
+
+                    case FileExtension.PowerPoint:
+                        keywordFound = CheckPowerPointForKeywordAndShapes(file);
                         break;
                 }
 
@@ -496,8 +503,7 @@ namespace FileKeywordSearcher
             // Return whether the keyword was found or not
             return bHasKeyword;
         }
-
-        //WORD ---------->
+        //Word ---------->
         public bool CheckWordForKeywordAndShapes(string filePath)
         {
             bool bHasKeyWord = false;
@@ -558,19 +564,98 @@ namespace FileKeywordSearcher
             // Return whether the keyword was found or not
             return bHasKeyWord;
         }
-        //WORD <----------
+        //Word <----------
 
+        //PowerPoint ---------->
+        public bool CheckPowerPointForKeywordAndShapes(string filePath)
+        {
+            bool hasKeyword = false;
+
+            try
+            {
+                // Open the PowerPoint presentation
+                using (PresentationDocument presentationDocument = PresentationDocument.Open(filePath, false))
+                {
+                    if (presentationDocument == null || presentationDocument.PresentationPart == null)
+                    {
+                        MessageBox.Show($"Unable to open or read the PowerPoint presentation at {filePath}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return false; // Exit early if document or main part is null
+                    }
+
+                    PresentationPart presentationPart = presentationDocument.PresentationPart;
+                    Presentation presentation = presentationPart.Presentation;
+
+                    // Iterate through slides
+                    foreach (SlideId slideId in presentation.SlideIdList.Elements<SlideId>())
+                    {
+                        SlidePart slidePart = (SlidePart)presentationPart.GetPartById(slideId.RelationshipId);
+
+                        // Check for keyword in slide text
+                        foreach (DocumentFormat.OpenXml.Presentation.Shape shape in slidePart.Slide.Descendants<DocumentFormat.OpenXml.Presentation.Shape>())
+                        {
+                            if (shape.TextBody != null)
+                            {
+                                string shapeText = shape.TextBody.InnerText;
+
+                                // Check if the shape contains the keyword (case insensitive)
+                                if (shapeText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                                {
+                                    hasKeyword = true;
+                                    break; // Exit loop early if keyword is found
+                                }
+                            }
+                        }
+
+                        if (hasKeyword)
+                        {
+                            break; // Exit outer loop if keyword is found
+                        }
+
+                        // Check for shapes in slide drawings
+                        foreach (var graphicFrame in slidePart.Slide.Descendants<DocumentFormat.OpenXml.Presentation.GraphicFrame>())
+                        {
+                            var drawingTexts = graphicFrame.Descendants<DocumentFormat.OpenXml.Drawing.Text>().Select(t => t.Text);
+                            string drawingText = string.Join("", drawingTexts);
+
+                            if (drawingText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                hasKeyword = true;
+                                break; // Exit loop early if keyword is found
+                            }
+                        }
+
+                        if (hasKeyword)
+                        {
+                            break; // Exit outer loop if keyword is found
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions such as file not found, access denied, etc.
+                MessageBox.Show($"Error reading file {filePath}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
+            // Return whether the keyword was found or not
+            return hasKeyword;
+        }
+        //PowerPoint <----------
         private FileExtension GetFileExtension(string fileName)
         {
             string extension = Path.GetExtension(fileName).ToLowerInvariant();
             return extension switch
             {
+                ".csv" => FileExtension.CSV, // Comma-Separated Values
                 ".xls" => FileExtension.Excel, // Microsoft Excel Spreadsheet (Legacy)
                 ".xlsx" => FileExtension.Excel, // Microsoft Excel Spreadsheet
-                ".docx" => FileExtension.WORD, // Microsoft Word document
-                ".docm" => FileExtension.WORD, // Microsoft Word document with macros
-                ".rtf" => FileExtension.WORD_RTF, // Microsoft Word document in Rich Text Format (RTF)
-                ".csv" => FileExtension.CSV, // Comma-Separated Values
+                ".docx" => FileExtension.Word, // Microsoft Word document
+                ".docm" => FileExtension.Word, // Microsoft Word document with macros
+                ".rtf" => FileExtension.Word_RTF, // Microsoft Word document in Rich Text Format (RTF)
+                ".ppt" => FileExtension.PowerPoint_old, // Microsoft PowerPoint presentation (Legacy)
+                ".pptm" => FileExtension.PowerPoint, // Microsoft PowerPoint presentation with macros
+                ".pptx" => FileExtension.PowerPoint, // Microsoft PowerPoint presentation (Open XML format)
                 ".pdf" => FileExtension.PDF, // Portable Document Format
                 // Ignored Extension ----------->
                 ".exe" => FileExtension.IgnoredExtension, // Executable File
