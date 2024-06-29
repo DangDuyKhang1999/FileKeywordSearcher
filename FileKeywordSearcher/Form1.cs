@@ -16,6 +16,7 @@ namespace FileKeywordSearcher
             Normal,
             CSV,
             Excel,
+            Excel_Old,
             Word,
             Word_RTF,
             PowerPoint,
@@ -173,7 +174,7 @@ namespace FileKeywordSearcher
                             linecode = $"   Cell: {fileItem.m_strLineMapping}";
                         }
                     }
-                    else if (fileItem.m_fileExtension == FileExtension.Excel)
+                    else if (fileItem.m_fileExtension == FileExtension.Excel || fileItem.m_fileExtension == FileExtension.Excel_Old)
                     {
 
                         linecode = $"   {fileItem.m_strLineMapping}";

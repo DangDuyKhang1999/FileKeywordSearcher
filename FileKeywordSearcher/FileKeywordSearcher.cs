@@ -11,6 +11,8 @@ using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Drawing.Wordprocessing;
 using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Presentation;
+using NPOI.HSSF.UserModel;
+using NPOI.SS.UserModel;
 
 
 
@@ -68,6 +70,10 @@ namespace FileKeywordSearcher
 
                     case FileExtension.Excel:
                         keywordFound = CheckExcelForKeywordAndShapes(file, ref strLineMapping);
+                        break;
+
+                    case FileExtension.Excel_Old:
+                        keywordFound = CheckOldExcelForKeywordAndShapes(file, ref strLineMapping);
                         break;
 
                     case FileExtension.PDF:
@@ -287,7 +293,7 @@ namespace FileKeywordSearcher
             }
             return "";
         }
-
+        //Excel ---------->
         public bool CheckExcelForKeywordAndShapes(string filePath, ref string strMapping)
         {
             bool bHasKeyWord = false;
@@ -446,6 +452,133 @@ namespace FileKeywordSearcher
             return bHasKeyWord;
         }
 
+        public bool CheckOldExcelForKeywordAndShapes(string filePath, ref string strMapping)
+        {
+            bool bHasKeyWord = false;
+            Dictionary<string, List<string>> keywordCells = new Dictionary<string, List<string>>();
+            Dictionary<string, List<string>> sheetShapes = new Dictionary<string, List<string>>();
+
+            try
+            {
+                HSSFWorkbook workbook;
+                using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                {
+                    workbook = new HSSFWorkbook(fileStream);
+                }
+
+                for (int i = 0; i < workbook.NumberOfSheets; i++)
+                {
+                    ISheet sheet = workbook.GetSheetAt(i);
+                    string sheetName = sheet.SheetName;
+
+                    // Initialize list of cells containing the keyword in the current worksheet
+                    if (!keywordCells.ContainsKey(sheetName))
+                    {
+                        keywordCells[sheetName] = new List<string>();
+                    }
+
+                    // Initialize list of shapes in the current worksheet
+                    if (!sheetShapes.ContainsKey(sheetName))
+                    {
+                        sheetShapes[sheetName] = new List<string>();
+                    }
+
+                    // Check for keyword in cells
+                    for (int rowIndex = 0; rowIndex <= sheet.LastRowNum; rowIndex++)
+                    {
+                        IRow row = sheet.GetRow(rowIndex);
+                        if (row == null) continue;
+
+                        for (int cellIndex = 0; cellIndex < row.LastCellNum; cellIndex++)
+                        {
+                            ICell cell = row.GetCell(cellIndex);
+                            if (cell == null) continue;
+
+                            string cellValue = cell.ToString();
+                            if (cellValue.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                string cellAddress = $"{GetExcelColumnName(cellIndex + 1)}{rowIndex + 1}";
+                                if (!keywordCells[sheetName].Contains(cellAddress))
+                                {
+                                    keywordCells[sheetName].Add(cellAddress);
+                                    bHasKeyWord = true;
+                                }
+                            }
+                        }
+                    }
+
+                    // Check for shapes in the worksheet
+                    HSSFPatriarch drawingPatriarch = sheet.DrawingPatriarch as HSSFPatriarch;
+                    if (drawingPatriarch != null)
+                    {
+                        foreach (HSSFShape shape in drawingPatriarch.Children)
+                        {
+                            if (shape is HSSFSimpleShape simpleShape && simpleShape.String != null)
+                            {
+                                string shapeText = simpleShape.String.String;
+                                if (shapeText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                                {
+                                    HSSFClientAnchor anchor = shape.Anchor as HSSFClientAnchor;
+                                    if (anchor != null)
+                                    {
+                                        string shapePosition = $"{GetExcelColumnName(anchor.Col1 + 1)}{anchor.Row1 + 1}";
+                                        if (!sheetShapes[sheetName].Contains(shapePosition))
+                                        {
+                                            sheetShapes[sheetName].Add(shapePosition);
+                                            bHasKeyWord = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Build strMapping combining cells containing the keyword and shapes for each sheet
+                List<string> resultMappings = new List<string>();
+                foreach (var kvp in keywordCells)
+                {
+                    string sheetName = kvp.Key;
+                    List<string> cellsInSheet = kvp.Value;
+                    List<string> shapesInSheet = sheetShapes.TryGetValue(sheetName, out var shapes) ? shapes : new List<string>();
+                    bool bHasKeyWordInSheet = false;
+                    string sheetMapping = $"{sheetName}:: ";
+
+                    if (cellsInSheet.Count > 0)
+                    {
+                        sheetMapping += (cellsInSheet.Count > 1) ? $"Cells({string.Join(", ", cellsInSheet)})" : $"Cell({cellsInSheet[0]})";
+                        bHasKeyWordInSheet = true;
+                    }
+
+                    if (shapesInSheet.Count > 0)
+                    {
+                        if (sheetMapping.Length > sheetName.Length + 3)
+                        {
+                            sheetMapping += ", ";
+                        }
+                        sheetMapping += (shapesInSheet.Count > 1) ? $"Shapes({string.Join(", ", shapesInSheet)})" : $"Shape({shapesInSheet[0]})";
+                        bHasKeyWordInSheet = true;
+                    }
+
+                    if (bHasKeyWordInSheet)
+                    {
+                        resultMappings.Add(sheetMapping);
+                    }
+                }
+
+                // Update strMapping with combined results
+                strMapping = string.Join("; ", resultMappings);
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions such as file not found, access denied, etc.
+                MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
+            }
+
+            // Return whether the keyword was found or not
+            return bHasKeyWord;
+        }
+
         public bool CheckPDFForKeyword(string filePath, ref string strKeywordMapping, ref bool bHasMultiKeyWord)
         {
             bool bHasKeyword = false;
@@ -503,6 +636,7 @@ namespace FileKeywordSearcher
             // Return whether the keyword was found or not
             return bHasKeyword;
         }
+        //Excel <----------
         //Word ---------->
         public bool CheckWordForKeywordAndShapes(string filePath)
         {
@@ -648,7 +782,7 @@ namespace FileKeywordSearcher
             return extension switch
             {
                 ".csv" => FileExtension.CSV, // Comma-Separated Values
-                ".xls" => FileExtension.Excel, // Microsoft Excel Spreadsheet (Legacy)
+                ".xls" => FileExtension.Excel_Old, // Microsoft Excel Spreadsheet (Legacy)
                 ".xlsx" => FileExtension.Excel, // Microsoft Excel Spreadsheet
                 ".docx" => FileExtension.Word, // Microsoft Word document
                 ".docm" => FileExtension.Word, // Microsoft Word document with macros
