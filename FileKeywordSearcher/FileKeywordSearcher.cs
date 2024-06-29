@@ -13,7 +13,8 @@ using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Presentation;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
-
+using NPOI.HWPF;
+using NPOI.HWPF.UserModel;
 
 
 namespace FileKeywordSearcher
@@ -82,6 +83,10 @@ namespace FileKeywordSearcher
 
                     case FileExtension.Word:
                         keywordFound = CheckWordForKeywordAndShapes(file);
+                        break;
+                    
+                    case FileExtension.Word_Old:
+                        keywordFound = CheckOldWordForKeywordAndShapes(file);
                         break;
 
                     case FileExtension.Word_RTF:
@@ -698,6 +703,32 @@ namespace FileKeywordSearcher
             // Return whether the keyword was found or not
             return bHasKeyWord;
         }
+        public bool CheckOldWordForKeywordAndShapes(string filePath)
+        {
+            bool bHasKeyWord = false;
+            try
+            {
+                using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                {
+                    HWPFDocument doc = new HWPFDocument(fs);
+
+                    // Check document text for keyword
+                    string documentText = doc.GetDocumentText();
+                    if (documentText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        bHasKeyWord = true;
+                    }
+                }
+
+                return bHasKeyWord;
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions such as file not found, access denied, etc.
+                MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
+                return false; // Return false if an error occurs
+            }
+        }
         //Word <----------
 
         //PowerPoint ---------->
@@ -784,6 +815,7 @@ namespace FileKeywordSearcher
                 ".csv" => FileExtension.CSV, // Comma-Separated Values
                 ".xls" => FileExtension.Excel_Old, // Microsoft Excel Spreadsheet (Legacy)
                 ".xlsx" => FileExtension.Excel, // Microsoft Excel Spreadsheet
+                ".doc" => FileExtension.Word_Old, // Microsoft Word document  (Legacy)
                 ".docx" => FileExtension.Word, // Microsoft Word document
                 ".docm" => FileExtension.Word, // Microsoft Word document with macros
                 ".rtf" => FileExtension.Word_RTF, // Microsoft Word document in Rich Text Format (RTF)

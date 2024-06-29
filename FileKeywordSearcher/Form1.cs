@@ -18,6 +18,7 @@ namespace FileKeywordSearcher
             Excel,
             Excel_Old,
             Word,
+            Word_Old,
             Word_RTF,
             PowerPoint,
             PowerPoint_old,
@@ -151,52 +152,30 @@ namespace FileKeywordSearcher
 
                     //RichTextBox
                     string linecode = "";
-                    if (fileItem.m_fileExtension == FileExtension.Normal)
+                    switch (fileItem.m_fileExtension)
                     {
-                        if (fileItem.m_bHasMultiKeyWord)
-                        {
-                            linecode = $"   Lines: {fileItem.m_strLineMapping}";
-                        }
-                        else
-                        {
-                            linecode = $"   Line: {fileItem.m_strLineMapping}";
-                        }
-                    }
-                    else if (fileItem.m_fileExtension == FileExtension.CSV)
-                    {
-
-                        if (fileItem.m_bHasMultiKeyWord)
-                        {
-                            linecode = $"   Cells: {fileItem.m_strLineMapping}";
-                        }
-                        else
-                        {
-                            linecode = $"   Cell: {fileItem.m_strLineMapping}";
-                        }
-                    }
-                    else if (fileItem.m_fileExtension == FileExtension.Excel || fileItem.m_fileExtension == FileExtension.Excel_Old)
-                    {
-
-                        linecode = $"   {fileItem.m_strLineMapping}";
-                    }
-                    else if (fileItem.m_fileExtension == FileExtension.PDF)
-                    {
-                        if (fileItem.m_bHasMultiKeyWord)
-                        {
-                            linecode = $"   Pages: {fileItem.m_strLineMapping}";
-                        }
-                        else
-                        {
-                            linecode = $"   Page: {fileItem.m_strLineMapping}";
-                        }
-                    }
-                    else if (fileItem.m_fileExtension == FileExtension.Word || fileItem.m_fileExtension == FileExtension.Word_RTF)
-                    {
-                        linecode = $"   Keyword detected in the file";
-                    }
-                    else if (fileItem.m_fileExtension == FileExtension.PowerPoint)
-                    {
-                        linecode = $"   Keyword detected in the file";
+                        case FileExtension.Normal:
+                            linecode = fileItem.m_bHasMultiKeyWord ? $"   Lines: {fileItem.m_strLineMapping}" : $"   Line: {fileItem.m_strLineMapping}";
+                            break;
+                        case FileExtension.CSV:
+                            linecode = fileItem.m_bHasMultiKeyWord ? $"   Cells: {fileItem.m_strLineMapping}" : $"   Cell: {fileItem.m_strLineMapping}";
+                            break;
+                        case FileExtension.Excel:
+                        case FileExtension.Excel_Old:
+                            linecode = $"   {fileItem.m_strLineMapping}";
+                            break;
+                        case FileExtension.PDF:
+                            linecode = fileItem.m_bHasMultiKeyWord ? $"   Pages: {fileItem.m_strLineMapping}" : $"   Page: {fileItem.m_strLineMapping}";
+                            break;
+                        case FileExtension.Word:
+                        case FileExtension.Word_RTF:
+                        case FileExtension.Word_Old:
+                        case FileExtension.PowerPoint:
+                            linecode = $"   Keyword detected in the file";
+                            break;
+                        default:
+                            linecode = $"   {fileItem.m_strLineMapping}";
+                            break;
                     }
 
                     RichTextBox rtItem = new()
