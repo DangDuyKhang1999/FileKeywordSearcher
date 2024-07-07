@@ -467,14 +467,17 @@ namespace FileKeywordSearcher
         {
             if (progressBar1 != null && txtProgressPercent != null && txtProgressDetail != null && txtProgressFileHasKeyWord != null && txtProgressCurrentFile != null)
             {
-                Font font = new Font("Segoe UI", progressBar1.Height / 2, FontStyle.Bold, GraphicsUnit.Point);
-                txtProgressDetail.Font = font;
-                txtProgressPercent.Font = font;
-                txtProgressFileHasKeyWord.Font = font;
-                txtProgressCurrentFile.Font = font;
+                int fontSize = progressBar1.Height / 2;
+                if (fontSize > 0)
+                {
+                    Font font = new Font("Segoe UI", fontSize, FontStyle.Bold, GraphicsUnit.Point);
+                    txtProgressDetail.Font = font;
+                    txtProgressPercent.Font = font;
+                    txtProgressFileHasKeyWord.Font = font;
+                    txtProgressCurrentFile.Font = font;
+                }
             }
         }
-
 
         private void FileProcessor_ProgressChanged(object sender, (int percent, int iFileCount, int iTotalFileCount, int iFileHasKeyWord, string strCurrentFile) e)
         {
