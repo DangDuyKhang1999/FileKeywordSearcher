@@ -31,6 +31,7 @@ namespace FileKeywordSearcher
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             btnBrowser = new Button();
             txtBrowser = new TextBox();
             tableLayoutPanel = new TableLayoutPanel();
@@ -122,8 +123,10 @@ namespace FileKeywordSearcher
             Controls.Add(tableLayoutPanel);
             Controls.Add(txtBrowser);
             Controls.Add(btnBrowser);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "Form1";
             Text = "File Keyword Searcher";
+            Load += Form1_Load;
             ResumeLayout(false);
             PerformLayout();
         }
