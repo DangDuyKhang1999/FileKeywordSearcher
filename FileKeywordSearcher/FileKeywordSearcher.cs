@@ -50,90 +50,119 @@ namespace FileKeywordSearcher
         {
             bool iResult = false;
 
-            // Check all files in the current directory
-            foreach (var file in Directory.GetFiles(directoryPath, "*"))
+            try
             {
-                string strLineMapping = "";
-                FileExtension fileExtension = GetFileExtension(file);
-                bool keywordFound = false;
-                bool bHasMultiKeyWord = false;
-
-                switch (fileExtension)
+                // Check all files in the current directory
+                foreach (var file in Directory.GetFiles(directoryPath, "*"))
                 {
-                    case FileExtension.Normal:
-                        keywordFound = CheckFileForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
-                        break;
+                    string strLineMapping = "";
+                    FileExtension fileExtension = GetFileExtension(file);
+                    bool keywordFound = false;
+                    bool bHasMultiKeyWord = false;
 
-                    case FileExtension.CSV:
-                        keywordFound = CheckCSVForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
-                        break;
+                    switch (fileExtension)
+                    {
+                        case FileExtension.Normal:
+                            keywordFound = CheckFileForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
+                            break;
 
-                    case FileExtension.Excel:
-                        keywordFound = CheckExcelForKeywordAndShapes(file, ref strLineMapping);
-                        break;
+                        case FileExtension.CSV:
+                            keywordFound = CheckCSVForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
+                            break;
 
-                    case FileExtension.Excel_Old:
-                        keywordFound = CheckOldExcelForKeywordAndShapes(file, ref strLineMapping);
-                        break;
+                        case FileExtension.Excel:
+                            keywordFound = CheckExcelForKeywordAndShapes(file, ref strLineMapping);
+                            break;
 
-                    case FileExtension.PDF:
-                        keywordFound = CheckPDFForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
-                        break;
+                        case FileExtension.Excel_Old:
+                            keywordFound = CheckOldExcelForKeywordAndShapes(file, ref strLineMapping);
+                            break;
 
-                    case FileExtension.Word:
-                        keywordFound = CheckWordForKeywordAndShapes(file);
-                        break;
-                    
-                    case FileExtension.Word_Old:
-                        keywordFound = CheckOldWordForKeywordAndShapes(file);
-                        break;
+                        case FileExtension.PDF:
+                            keywordFound = CheckPDFForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
+                            break;
 
-                    case FileExtension.Word_RTF:
-                        keywordFound = CheckFileForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
-                        break;
+                        case FileExtension.Word:
+                            keywordFound = CheckWordForKeywordAndShapes(file);
+                            break;
 
-                    case FileExtension.PowerPoint:
-                        keywordFound = CheckPowerPointForKeywordAndShapes(file);
-                        break;
+                        case FileExtension.Word_Old:
+                            keywordFound = CheckOldWordForKeywordAndShapes(file);
+                            break;
 
-                    case FileExtension.PowerPoint_old:
-                        keywordFound = CheckOldPowerPointForKeywordAndShapes(file);
-                        break;
+                        case FileExtension.Word_RTF:
+                            keywordFound = CheckFileForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
+                            break;
+
+                        case FileExtension.PowerPoint:
+                            keywordFound = CheckPowerPointForKeywordAndShapes(file);
+                            break;
+
+                        case FileExtension.PowerPoint_old:
+                            keywordFound = CheckOldPowerPointForKeywordAndShapes(file);
+                            break;
+                    }
+
+                    if (keywordFound)
+                    {
+                        FileItem fileItem = new FileItem(file, strLineMapping, fileExtension, bHasMultiKeyWord);
+                        m_fileItems.Add(fileItem);
+                        iResult = true; // If at least one file is found, set result to true
+                    }
+                    m_iFileCount++;
+                    int percentComplete = (int)((double)m_iFileCount / m_iTotalFileCount * 100);
+                    OnProgressChanged(percentComplete, file);
                 }
 
-                if (keywordFound)
+                // Recursively check all subdirectories
+                foreach (var subDirectory in Directory.GetDirectories(directoryPath))
                 {
-                    FileItem fileItem = new FileItem(file, strLineMapping, fileExtension, bHasMultiKeyWord);
-                    m_fileItems.Add(fileItem);
-                    iResult = true; // If at least one file is found, set result to true
+                    iResult |= HasKeyWord(subDirectory);
                 }
-                m_iFileCount++;
-                int percentComplete = (int)((double)m_iFileCount / m_iTotalFileCount * 100);
-                OnProgressChanged(percentComplete, file);
             }
-
-            // Recursively check all subdirectories
-            foreach (var subDirectory in Directory.GetDirectories(directoryPath))
+            catch (UnauthorizedAccessException ex)
             {
-                iResult |= HasKeyWord(subDirectory);
+                // Skip directories that cannot be accessed
+                Console.WriteLine($"Access to directory '{directoryPath}' is denied: {ex.Message}. Skipping this folder.");
+            }
+            catch (Exception ex)
+            {
+                // Handle other exceptions
+                Console.WriteLine($"Exception occurred: {ex.Message}");
             }
 
             return iResult;
         }
+
         public int CountFiles(string directoryPath)
         {
             int totalCount = 0;
 
-            // Count all files in the current directory
-            totalCount += Directory.GetFiles(directoryPath).Length;
-
-            // Recursively count all files in subdirectories
-            foreach (var subDirectory in Directory.GetDirectories(directoryPath))
+            try
             {
-                totalCount += CountFiles(subDirectory);
+                // Count all files in the current directory
+                totalCount += Directory.GetFiles(directoryPath).Length;
+
+                // Recursively count all files in subdirectories
+                foreach (var subDirectory in Directory.GetDirectories(directoryPath))
+                {
+                    totalCount += CountFiles(subDirectory);
+                }
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                // Skip directories that cannot be accessed
+                Console.WriteLine($"Access to directory '{directoryPath}' is denied: {ex.Message}. Skipping this folder.");
+            }
+            catch (Exception ex)
+            {
+                // Handle other exceptions
+                Console.WriteLine($"Exception occurred: {ex.Message}");
+            }
+
             return totalCount;
         }
+
         public bool getTotalFiles()
         {
             try
@@ -148,14 +177,7 @@ namespace FileKeywordSearcher
             {
                 MessageBox.Show($"Exception occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            if (m_iTotalFileCount == 0)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+            return m_iTotalFileCount != 0;
         }
 
         private bool CheckFileForKeyword(string filePath, ref string strLineMapping, ref bool bHasMultiKeyWord)

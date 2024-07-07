@@ -383,7 +383,7 @@ namespace FileKeywordSearcher
                 BackColor = Color.FromArgb(190, 217, 217),
             };
 
-            // Initialize Lable File Path
+            // Initialize Lable Result Path
             txtProgressFileHasKeyWord = new Label
             {
                 TextAlign = ContentAlignment.TopRight,
@@ -443,7 +443,7 @@ namespace FileKeywordSearcher
                 txtProgressFileHasKeyWord.Height = progressBar1.Height + 20;
 
                 txtProgressCurrentFile.Width = progressBar1.Width;
-                txtProgressCurrentFile.Height = progressBar1.Height;
+                txtProgressCurrentFile.Height = progressBar1.Height + progressBar1.Height/2;
 
             }
         }
