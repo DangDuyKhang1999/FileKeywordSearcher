@@ -27,7 +27,7 @@ namespace FileKeywordSearcher
         public List<FileItem> m_fileItems { get; set; } = new List<FileItem>();
 
 
-        public event EventHandler<(int percent, int iFileCount, int iTotalFileCount, int iFileHasKeyWord)> ProgressChanged;
+        public event EventHandler<(int percent, int iFileCount, int iTotalFileCount, int iFileHasKeyWord, string strCurrentFile)> ProgressChanged;
 
         public FileKeywordSearcher(string strBrowser, string strKeyWord)
         {
@@ -43,7 +43,7 @@ namespace FileKeywordSearcher
         }
         protected virtual void OnProgressChanged(int percent, string filePath)
         {
-            ProgressChanged?.Invoke(this, (percent, m_iFileCount, m_iTotalFileCount, m_fileItems.Count)); // Trigger the ProgressChanged event with percent and filePath
+            ProgressChanged?.Invoke(this, (percent, m_iFileCount, m_iTotalFileCount, m_fileItems.Count, filePath)); // Trigger the ProgressChanged event with percent and filePath
         }
 
         public bool HasKeyWord(string directoryPath)
@@ -109,7 +109,7 @@ namespace FileKeywordSearcher
                 }
                 m_iFileCount++;
                 int percentComplete = (int)((double)m_iFileCount / m_iTotalFileCount * 100);
-                OnProgressChanged(percentComplete, directoryPath);
+                OnProgressChanged(percentComplete, file);
             }
 
             // Recursively check all subdirectories

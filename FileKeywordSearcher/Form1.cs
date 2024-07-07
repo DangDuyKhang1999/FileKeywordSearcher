@@ -31,6 +31,7 @@ namespace FileKeywordSearcher
         private Label? txtProgressPercent = null!;
         private Label? txtProgressDetail = null!;
         private Label? txtProgressFileHasKeyWord = null!;
+        private Label? txtProgressCurrentFile = null!;
         public Form1()
         {
             InitializeComponent();
@@ -363,7 +364,7 @@ namespace FileKeywordSearcher
                 Height = ClientRectangle.Height / 15,
             };
 
-            // Initialize TextBox Progress Precent
+            // Initialize Lable Progress Precent
             txtProgressPercent = new Label
             {
                 TextAlign = ContentAlignment.MiddleCenter,
@@ -372,7 +373,7 @@ namespace FileKeywordSearcher
                 Width = progressBar1.Width,
                 BackColor = Color.FromArgb(190, 217, 217),
             };
-            // Initialize TextBox Progress Detail
+            // Initialize Lable Progress Detail
             txtProgressDetail = new Label
             {
                 TextAlign = ContentAlignment.TopLeft,
@@ -382,10 +383,20 @@ namespace FileKeywordSearcher
                 BackColor = Color.FromArgb(190, 217, 217),
             };
 
-            // Initialize TextBox File Path
+            // Initialize Lable File Path
             txtProgressFileHasKeyWord = new Label
             {
                 TextAlign = ContentAlignment.TopRight,
+                BorderStyle = BorderStyle.None,
+                Height = progressBar1.Height,
+                Width = progressBar1.Width,
+                BackColor = Color.FromArgb(190, 217, 217),
+            };
+
+            // Initialize Lable Current File
+            txtProgressCurrentFile = new Label
+            {
+                TextAlign = ContentAlignment.TopLeft,
                 BorderStyle = BorderStyle.None,
                 Height = progressBar1.Height,
                 Width = progressBar1.Width,
@@ -402,12 +413,14 @@ namespace FileKeywordSearcher
             this.Controls.Add(txtProgressPercent);
             this.Controls.Add(txtProgressDetail);
             this.Controls.Add(txtProgressFileHasKeyWord);
+            this.Controls.Add(txtProgressCurrentFile);
 
             // Bring ProgressBar to front
             progressBar1.BringToFront();
             txtProgressPercent.BringToFront();
             txtProgressDetail.BringToFront();
             txtProgressFileHasKeyWord.BringToFront();
+            txtProgressCurrentFile.BringToFront();
 
             // Initialize FileProcess instance and subscribe to ProgressChanged event
             fileKeywordSearcher.ProgressChanged += FileProcessor_ProgressChanged;
@@ -415,7 +428,7 @@ namespace FileKeywordSearcher
 
         private void UpdateProgressBarWidth()
         {
-            if (progressBar1 != null && txtProgressPercent != null && txtProgressDetail != null && txtProgressFileHasKeyWord != null)
+            if (progressBar1 != null && txtProgressPercent != null && txtProgressDetail != null && txtProgressFileHasKeyWord != null && txtProgressCurrentFile != null)
             {
                 progressBar1.Width = ClientRectangle.Width - 50;
                 progressBar1.Height = ClientRectangle.Height / 15;
@@ -428,11 +441,15 @@ namespace FileKeywordSearcher
 
                 txtProgressFileHasKeyWord.Width = progressBar1.Width / 2;
                 txtProgressFileHasKeyWord.Height = progressBar1.Height + 20;
+
+                txtProgressCurrentFile.Width = progressBar1.Width;
+                txtProgressCurrentFile.Height = progressBar1.Height;
+
             }
         }
         private void UpdateProgressBarPosition()
         {
-            if (progressBar1 != null && txtProgressPercent != null && txtProgressDetail != null && txtProgressFileHasKeyWord != null)
+            if (progressBar1 != null && txtProgressPercent != null && txtProgressDetail != null && txtProgressFileHasKeyWord != null && txtProgressCurrentFile != null)
             {
                 int progressBarHeight = progressBar1.Height;
                 int progressBarX = (ClientRectangle.Width - progressBar1.Width) / 2;
@@ -442,22 +459,24 @@ namespace FileKeywordSearcher
                 txtProgressPercent.Location = new Point(progressBarX, progressBarY - txtProgressPercent.Height - 10);
                 txtProgressDetail.Location = new Point(progressBarX, progressBarY + progressBar1.Height);
                 txtProgressFileHasKeyWord.Location = new Point(progressBarX + progressBar1.Width / 2, progressBarY + progressBar1.Height);
+                txtProgressCurrentFile.Location = new Point(progressBarX, txtProgressDetail.Location.Y + txtProgressCurrentFile.Height);
             }
         }
 
         private void UpdateProgressBarFont()
         {
-            if (progressBar1 != null && txtProgressPercent != null && txtProgressDetail != null && txtProgressFileHasKeyWord != null)
+            if (progressBar1 != null && txtProgressPercent != null && txtProgressDetail != null && txtProgressFileHasKeyWord != null && txtProgressCurrentFile != null)
             {
                 Font font = new Font("Segoe UI", progressBar1.Height / 2, FontStyle.Bold, GraphicsUnit.Point);
                 txtProgressDetail.Font = font;
                 txtProgressPercent.Font = font;
                 txtProgressFileHasKeyWord.Font = font;
+                txtProgressCurrentFile.Font = font;
             }
         }
 
 
-        private void FileProcessor_ProgressChanged(object sender, (int percent, int iFileCount, int iTotalFileCount, int iFileHasKeyWord) e)
+        private void FileProcessor_ProgressChanged(object sender, (int percent, int iFileCount, int iTotalFileCount, int iFileHasKeyWord, string strCurrentFile) e)
         {
             // Handle ProgressChanged event from fileProcessor
             _ = this.Invoke((MethodInvoker)delegate ()
@@ -467,6 +486,7 @@ namespace FileKeywordSearcher
                 txtProgressPercent.Text = e.percent.ToString() + "%";
                 txtProgressDetail.Text = e.iFileCount.ToString() + "/" + e.iTotalFileCount.ToString();
                 txtProgressFileHasKeyWord.Text = "Files containing keyword: " + e.iFileHasKeyWord.ToString();
+                txtProgressCurrentFile.Text = e.strCurrentFile;
                 // Check if progress is complete (100%)
                 if (e.percent >= 100)
                 {
@@ -489,11 +509,15 @@ namespace FileKeywordSearcher
                         txtProgressFileHasKeyWord.Visible = false;
                         txtProgressFileHasKeyWord = null;
 
+                        txtProgressCurrentFile.Visible = false;
+                        txtProgressCurrentFile = null;
+
                         // Remove ProgressBar from Form
                         this.Controls.Remove(progressBar1);
                         this.Controls.Remove(txtProgressPercent);
                         this.Controls.Remove(txtProgressDetail);
                         this.Controls.Remove(txtProgressFileHasKeyWord);
+                        this.Controls.Remove(txtProgressCurrentFile);
                         InitializeTableLayoutResult();
                         ControlsStatus(true);
 
