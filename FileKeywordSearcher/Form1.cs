@@ -171,6 +171,7 @@ namespace FileKeywordSearcher
                         case FileExtension.Word_RTF:
                         case FileExtension.Word_Old:
                         case FileExtension.PowerPoint:
+                        case FileExtension.PowerPoint_old:
                             linecode = $"   Keyword detected in the file";
                             break;
                         default:

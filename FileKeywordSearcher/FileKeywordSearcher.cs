@@ -6,15 +6,14 @@ using Path = System.IO.Path;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Drawing.Spreadsheet;
-using DocumentFormat.OpenXml.Wordprocessing;
-using DocumentFormat.OpenXml;
-using DocumentFormat.OpenXml.Drawing.Wordprocessing;
-using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Presentation;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.HWPF;
-using NPOI.HWPF.UserModel;
+using PowerPoint = Microsoft.Office.Interop.PowerPoint;
+using Office = Microsoft.Office.Core;
+using Microsoft.Office.Core;
+using System.Runtime.InteropServices;
 
 
 namespace FileKeywordSearcher
@@ -95,6 +94,10 @@ namespace FileKeywordSearcher
 
                     case FileExtension.PowerPoint:
                         keywordFound = CheckPowerPointForKeywordAndShapes(file);
+                        break;
+
+                    case FileExtension.PowerPoint_old:
+                        keywordFound = CheckOldPowerPointForKeywordAndShapes(file);
                         break;
                 }
 
@@ -801,6 +804,90 @@ namespace FileKeywordSearcher
                 // Handle exceptions such as file not found, access denied, etc.
                 MessageBox.Show($"Error reading file {filePath}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
+            }
+
+            // Return whether the keyword was found or not
+            return hasKeyword;
+        }
+
+        public bool CheckOldPowerPointForKeywordAndShapes(string filePath)
+        {
+            PowerPoint.Application powerPointApp = null;
+            PowerPoint.Presentations presentations = null;
+            PowerPoint.Presentation presentation = null;
+            bool hasKeyword = false;
+
+            try
+            {
+                powerPointApp = new PowerPoint.Application();
+                presentations = powerPointApp.Presentations;
+                presentation = presentations.Open(filePath, MsoTriState.msoFalse, MsoTriState.msoFalse, MsoTriState.msoFalse);
+
+                // Iterate through slides
+                foreach (PowerPoint.Slide slide in presentation.Slides)
+                {
+                    // Check for keyword in slide text
+                    foreach (PowerPoint.Shape shape in slide.Shapes)
+                    {
+                        if (shape.HasTextFrame == MsoTriState.msoTrue && shape.TextFrame.HasText == MsoTriState.msoTrue)
+                        {
+                            string shapeText = shape.TextFrame.TextRange.Text;
+
+                            // Check if the shape contains the keyword (case insensitive)
+                            if (shapeText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                hasKeyword = true;
+                                break; // Exit loop early if keyword is found
+                            }
+                        }
+                    }
+
+                    if (hasKeyword)
+                    {
+                        break; // Exit outer loop if keyword is found
+                    }
+
+                    // Check for shapes in slide drawings
+                    foreach (PowerPoint.Shape shape in slide.Shapes)
+                    {
+                        if (shape.Type == Office.MsoShapeType.msoGroup)
+                        {
+                            foreach (PowerPoint.Shape subShape in shape.GroupItems)
+                            {
+                                if (subShape.HasTextFrame == MsoTriState.msoTrue && subShape.TextFrame.HasText == MsoTriState.msoTrue)
+                                {
+                                    string subShapeText = subShape.TextFrame.TextRange.Text;
+
+                                    if (subShapeText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                                    {
+                                        hasKeyword = true;
+                                        break; // Exit loop early if keyword is found
+                                    }
+                                }
+                            }
+                        }
+
+                        if (hasKeyword)
+                        {
+                            break; // Exit outer loop if keyword is found
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions such as file not found, access denied, etc.
+                string errorMessage = $"Error reading .ppt file {filePath}: {ex.Message}. The machine is unable to read the PowerPoint .ppt file. This might be due to PowerPoint not being installed on the machine.";
+                MessageBox.Show(errorMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+            finally
+            {
+                // Close the presentation and quit PowerPoint application
+                if (presentation != null) presentation.Close();
+                if (presentations != null) Marshal.ReleaseComObject(presentations);
+                if (powerPointApp != null) powerPointApp.Quit();
+                if (powerPointApp != null) Marshal.ReleaseComObject(powerPointApp);
             }
 
             // Return whether the keyword was found or not
