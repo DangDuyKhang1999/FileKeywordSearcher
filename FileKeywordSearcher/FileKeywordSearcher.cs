@@ -25,6 +25,7 @@ namespace FileKeywordSearcher
         public int m_iFileCount { get; set; }
         public int m_iTotalFileCount { get; set; }
         public List<FileItem> m_fileItems { get; set; } = new List<FileItem>();
+        public List<FileItem> m_toTalFileItems { get; set; } = new List<FileItem>();
 
 
         public event EventHandler<(int percent, int iFileCount, int iTotalFileCount, int iFileHasKeyWord, string strCurrentFile)> ProgressChanged;
@@ -120,15 +121,9 @@ namespace FileKeywordSearcher
                     iResult |= HasKeyWord(subDirectory);
                 }
             }
-            catch (UnauthorizedAccessException ex)
-            {
-                // Skip directories that cannot be accessed
-                Console.WriteLine($"Access to directory '{directoryPath}' is denied: {ex.Message}. Skipping this folder.");
-            }
             catch (Exception ex)
             {
                 // Handle other exceptions
-                Console.WriteLine($"Exception occurred: {ex.Message}");
             }
 
             return iResult;
@@ -149,15 +144,9 @@ namespace FileKeywordSearcher
                     totalCount += CountFiles(subDirectory);
                 }
             }
-            catch (UnauthorizedAccessException ex)
-            {
-                // Skip directories that cannot be accessed
-                Console.WriteLine($"Access to directory '{directoryPath}' is denied: {ex.Message}. Skipping this folder.");
-            }
             catch (Exception ex)
             {
                 // Handle other exceptions
-                Console.WriteLine($"Exception occurred: {ex.Message}");
             }
 
             return totalCount;
@@ -205,7 +194,7 @@ namespace FileKeywordSearcher
             catch (Exception ex)
             {
                 // Handle exceptions such as file not found, access denied, etc.
-                MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
+                //MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
             }
             if (keywordLines.Count > 1)
             {
@@ -259,7 +248,7 @@ namespace FileKeywordSearcher
             catch (Exception ex)
             {
                 // Handle exceptions such as file not found, access denied, etc.
-                MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
+                //MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
             }
             if (keywordCells.Count > 1)
             {
@@ -337,14 +326,14 @@ namespace FileKeywordSearcher
                 {
                     if (document == null || document.WorkbookPart == null)
                     {
-                        MessageBox.Show($"Unable to open or read the Excel document at {filePath}");
+                        //MessageBox.Show($"Unable to open or read the Excel document at {filePath}");
                         return false; // Exit early if document or workbook part is null
                     }
 
                     WorkbookPart workbookPart = document.WorkbookPart;
                     if (workbookPart == null || workbookPart.Workbook.Sheets == null)
                     {
-                        MessageBox.Show($"Unable to open or read the Excel document at {filePath}");
+                        //MessageBox.Show($"Unable to open or read the Excel document at {filePath}");
                         return false; // Exit early if document or workbook part is null
                     }
                     foreach (Sheet sheet in workbookPart.Workbook.Sheets)
@@ -475,7 +464,7 @@ namespace FileKeywordSearcher
             catch (Exception ex)
             {
                 // Handle exceptions such as file not found, access denied, etc.
-                MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
+                //MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
             }
 
             // Return whether the keyword was found or not
@@ -602,7 +591,7 @@ namespace FileKeywordSearcher
             catch (Exception ex)
             {
                 // Handle exceptions such as file not found, access denied, etc.
-                MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
+                //MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
             }
 
             // Return whether the keyword was found or not
@@ -640,7 +629,7 @@ namespace FileKeywordSearcher
             catch (Exception ex)
             {
                 // Handle exceptions such as file not found, access denied, etc.
-                MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
+                //MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
             }
 
             // Build strKeywordMapping from the set of pagesWithKeyword
@@ -681,7 +670,7 @@ namespace FileKeywordSearcher
                 {
                     if (document == null || document.MainDocumentPart == null)
                     {
-                        MessageBox.Show($"Unable to open or read the Word document at {filePath}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        //MessageBox.Show($"Unable to open or read the Word document at {filePath}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         return false; // Exit early if document or main part is null
                     }
 
@@ -721,7 +710,7 @@ namespace FileKeywordSearcher
             catch (Exception ex)
             {
                 // Handle exceptions such as file not found, access denied, etc.
-                MessageBox.Show($"Error reading file {filePath}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                //MessageBox.Show($"Error reading file {filePath}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
 
@@ -750,7 +739,7 @@ namespace FileKeywordSearcher
             catch (Exception ex)
             {
                 // Handle exceptions such as file not found, access denied, etc.
-                MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
+                //MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
                 return false; // Return false if an error occurs
             }
         }
@@ -768,7 +757,7 @@ namespace FileKeywordSearcher
                 {
                     if (presentationDocument == null || presentationDocument.PresentationPart == null)
                     {
-                        MessageBox.Show($"Unable to open or read the PowerPoint presentation at {filePath}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        //MessageBox.Show($"Unable to open or read the PowerPoint presentation at {filePath}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         return false; // Exit early if document or main part is null
                     }
 
@@ -824,7 +813,7 @@ namespace FileKeywordSearcher
             catch (Exception ex)
             {
                 // Handle exceptions such as file not found, access denied, etc.
-                MessageBox.Show($"Error reading file {filePath}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                //MessageBox.Show($"Error reading file {filePath}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
 
@@ -899,8 +888,8 @@ namespace FileKeywordSearcher
             catch (Exception ex)
             {
                 // Handle exceptions such as file not found, access denied, etc.
-                string errorMessage = $"Error reading .ppt file {filePath}: {ex.Message}. The machine is unable to read the PowerPoint .ppt file. This might be due to PowerPoint not being installed on the machine.";
-                MessageBox.Show(errorMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+               // string errorMessage = $"Error reading .ppt file {filePath}: {ex.Message}. The machine is unable to read the PowerPoint .ppt file. This might be due to PowerPoint not being installed on the machine.";
+                //MessageBox.Show(errorMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
             finally

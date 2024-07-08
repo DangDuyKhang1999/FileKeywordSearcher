@@ -72,12 +72,12 @@ namespace FileKeywordSearcher
                 btnBrowser.Focus();
                 return;
             }
+            ControlsStatus(false);
             fileKeywordSearcher = new FileKeywordSearcher(txtBrowser.Text, txtKeyWord.Text);
             if (!fileKeywordSearcher.getTotalFiles())
             {
                 return;
             }
-            ControlsStatus(false);
             if (progressBar1 == null)
             {
                 tableLayoutPanel.Controls.Clear();

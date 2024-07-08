@@ -56,7 +56,7 @@ namespace FileKeywordSearcher
             // 
             // txtBrowser
             // 
-            txtBrowser.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            txtBrowser.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             txtBrowser.BackColor = Color.FromArgb(190, 217, 217);
             txtBrowser.BorderStyle = BorderStyle.None;
             txtBrowser.ForeColor = Color.Red;
