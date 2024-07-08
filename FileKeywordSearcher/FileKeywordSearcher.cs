@@ -25,7 +25,7 @@ namespace FileKeywordSearcher
         public int m_iFileCount { get; set; }
         public int m_iTotalFileCount { get; set; }
         public List<FileItem> m_fileItems { get; set; } = new List<FileItem>();
-        public List<FileItem> m_toTalFileItems { get; set; } = new List<FileItem>();
+        public List<string> m_totalFilePath { get; set; } = new List<string>();
 
 
         public event EventHandler<(int percent, int iFileCount, int iTotalFileCount, int iFileHasKeyWord, string strCurrentFile)> ProgressChanged;
@@ -47,14 +47,13 @@ namespace FileKeywordSearcher
             ProgressChanged?.Invoke(this, (percent, m_iFileCount, m_iTotalFileCount, m_fileItems.Count, filePath)); // Trigger the ProgressChanged event with percent and filePath
         }
 
-        public bool HasKeyWord(string directoryPath)
+        public bool HasKeyWord()
         {
             bool iResult = false;
 
             try
             {
-                // Check all files in the current directory
-                foreach (var file in Directory.GetFiles(directoryPath, "*"))
+                foreach (var file in m_totalFilePath)
                 {
                     string strLineMapping = "";
                     FileExtension fileExtension = GetFileExtension(file);
@@ -111,17 +110,11 @@ namespace FileKeywordSearcher
                         iResult = true; // If at least one file is found, set result to true
                     }
                     m_iFileCount++;
-                    int percentComplete = (int)((double)m_iFileCount / m_iTotalFileCount * 100);
+                    int percentComplete = (int)((double)m_iFileCount / m_totalFilePath.Count * 100);
                     OnProgressChanged(percentComplete, file);
                 }
-
-                // Recursively check all subdirectories
-                foreach (var subDirectory in Directory.GetDirectories(directoryPath))
-                {
-                    iResult |= HasKeyWord(subDirectory);
-                }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Handle other exceptions
             }
@@ -132,25 +125,35 @@ namespace FileKeywordSearcher
         public int CountFiles(string directoryPath)
         {
             int totalCount = 0;
+            var excludedFolders = new HashSet<string> { ".git", ".svn", ".vs", ".idea", ".vscode", ".env", ".config", ".gradle", ".mvn", ".cache" };
 
             try
             {
-                // Count all files in the current directory
-                totalCount += Directory.GetFiles(directoryPath).Length;
+                // Count files in the current directory
+                foreach (var file in Directory.GetFiles(directoryPath))
+                {
+                    totalCount++;
+                    m_totalFilePath.Add(file); // Add file path to the list
+                }
 
-                // Recursively count all files in subdirectories
+                // Recursively count files in subdirectories
                 foreach (var subDirectory in Directory.GetDirectories(directoryPath))
                 {
-                    totalCount += CountFiles(subDirectory);
+                    var directoryName = new DirectoryInfo(subDirectory).Name;
+                    if (!excludedFolders.Contains(directoryName))
+                    {
+                        totalCount += CountFiles(subDirectory);
+                    }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // Handle other exceptions
+                // Handle other exceptions if needed
             }
 
             return totalCount;
         }
+
 
         public bool getTotalFiles()
         {
@@ -158,13 +161,8 @@ namespace FileKeywordSearcher
             {
                 m_iTotalFileCount = CountFiles(m_strBrowser);
             }
-            catch (UnauthorizedAccessException ex)
+            catch (Exception)
             {
-                MessageBox.Show($"Access to directory '{m_strBrowser}' is denied: {ex.Message}. Please ensure you have the necessary permissions to access this folder.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Exception occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             return m_iTotalFileCount != 0;
         }
@@ -191,7 +189,7 @@ namespace FileKeywordSearcher
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Handle exceptions such as file not found, access denied, etc.
                 //MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
@@ -245,7 +243,7 @@ namespace FileKeywordSearcher
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Handle exceptions such as file not found, access denied, etc.
                 //MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
@@ -461,7 +459,7 @@ namespace FileKeywordSearcher
                 // Update strMapping with the combined mappings
                 strMapping = string.Join("; ", resultMappings);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Handle exceptions such as file not found, access denied, etc.
                 //MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
@@ -588,7 +586,7 @@ namespace FileKeywordSearcher
                 // Update strMapping with combined results
                 strMapping = string.Join("; ", resultMappings);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Handle exceptions such as file not found, access denied, etc.
                 //MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
@@ -626,7 +624,7 @@ namespace FileKeywordSearcher
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Handle exceptions such as file not found, access denied, etc.
                 //MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
@@ -707,7 +705,7 @@ namespace FileKeywordSearcher
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Handle exceptions such as file not found, access denied, etc.
                 //MessageBox.Show($"Error reading file {filePath}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -736,7 +734,7 @@ namespace FileKeywordSearcher
 
                 return bHasKeyWord;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Handle exceptions such as file not found, access denied, etc.
                 //MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
@@ -810,7 +808,7 @@ namespace FileKeywordSearcher
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Handle exceptions such as file not found, access denied, etc.
                 //MessageBox.Show($"Error reading file {filePath}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -885,10 +883,10 @@ namespace FileKeywordSearcher
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Handle exceptions such as file not found, access denied, etc.
-               // string errorMessage = $"Error reading .ppt file {filePath}: {ex.Message}. The machine is unable to read the PowerPoint .ppt file. This might be due to PowerPoint not being installed on the machine.";
+                // string errorMessage = $"Error reading .ppt file {filePath}: {ex.Message}. The machine is unable to read the PowerPoint .ppt file. This might be due to PowerPoint not being installed on the machine.";
                 //MessageBox.Show(errorMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }

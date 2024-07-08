@@ -94,7 +94,7 @@ namespace FileKeywordSearcher
             UpdateProgressBarPosition();
             UpdateProgressBarFont();
             // Asynchronously call ProcessFiles method
-            await Task.Run(() => fileKeywordSearcher.HasKeyWord(txtBrowser.Text));
+            await Task.Run(() => fileKeywordSearcher.HasKeyWord());
         }
 
         private bool InitializeTableLayoutResult()
