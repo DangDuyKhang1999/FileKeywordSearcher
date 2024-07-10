@@ -5,12 +5,15 @@ using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
 using System.Threading.Tasks;
+using System.Threading;
 
 
 namespace FileKeywordSearcher
 {
     public partial class Form1 : Form
     {
+        private CancellationTokenSource cancellationTokenSource;
+
         public enum FileExtension
         {
             Normal,
@@ -59,42 +62,63 @@ namespace FileKeywordSearcher
 
         private async void btnStartSearch_Click_1(object sender, EventArgs e)
         {
-            if (String.IsNullOrEmpty(txtBrowser.Text))
+            if (btnStartSearch.Text == "Search")
             {
-                MessageBox.Show("Please select the directory for inspection!!!", "Error!!!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                btnBrowser.Focus();
-                return;
-            }
+                if (String.IsNullOrEmpty(txtBrowser.Text))
+                {
+                    MessageBox.Show("Please select the directory for inspection!!!", "Error!!!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    btnBrowser.Focus();
+                    return;
+                }
 
-            if (!Directory.Exists(txtBrowser.Text))
-            {
-                MessageBox.Show("The directory is not valid!!!", "Error!!!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                btnBrowser.Focus();
-                return;
+                if (!Directory.Exists(txtBrowser.Text))
+                {
+                    MessageBox.Show("The directory is not valid!!!", "Error!!!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    btnBrowser.Focus();
+                    return;
+                }
+                ControlsStatus(false);
+                fileKeywordSearcher = new FileKeywordSearcher(txtBrowser.Text, txtKeyWord.Text);
+                if (!fileKeywordSearcher.getTotalFiles())
+                {
+                    return;
+                }
+                if (progressBar1 == null)
+                {
+                    tableLayoutPanel.Controls.Clear();
+                    InitializeProgressBarAndFileProcess();
+                }
+                // Show and start ProgressBar
+                if (progressBar1 != null)
+                {
+                    progressBar1.Visible = true;
+                    progressBar1.Value = 0;
+                }
+                UpdateControlSizesAndLocations();
+                UpdateProgressBarWidth();
+                UpdateProgressBarPosition();
+                UpdateProgressBarFont();
+
+                // Khởi tạo CancellationTokenSource
+                cancellationTokenSource = new CancellationTokenSource();
+
+                try
+                {
+                    // Asynchronously call ProcessFiles method
+                    await Task.Run(() => fileKeywordSearcher.HasKeyWord(cancellationTokenSource.Token));
+                }
+                finally
+                {
+                    ControlsStatus(true); 
+                    btnStartSearch.Text = "Search";
+                }
             }
-            ControlsStatus(false);
-            fileKeywordSearcher = new FileKeywordSearcher(txtBrowser.Text, txtKeyWord.Text);
-            if (!fileKeywordSearcher.getTotalFiles())
+            else
             {
-                return;
+                ClearProgressBar();
+                cancellationTokenSource.Cancel();
+                btnStartSearch.Text = "Search";
             }
-            if (progressBar1 == null)
-            {
-                tableLayoutPanel.Controls.Clear();
-                InitializeProgressBarAndFileProcess();
-            }
-            // Show and start ProgressBar
-            if (progressBar1 != null)
-            {
-                progressBar1.Visible = true;
-                progressBar1.Value = 0;
-            }
-            UpdateControlSizesAndLocations();
-            UpdateProgressBarWidth();
-            UpdateProgressBarPosition();
-            UpdateProgressBarFont();
-            // Asynchronously call ProcessFiles method
-            await Task.Run(() => fileKeywordSearcher.HasKeyWord());
         }
 
         private bool InitializeTableLayoutResult()
@@ -280,6 +304,7 @@ namespace FileKeywordSearcher
 
             Point newLocation = txtBrowser.Location;
             newLocation.Y = btnBrowser.Location.Y;
+            newLocation.X = tableLayoutPanel.Location.X;
             txtBrowser.Location = newLocation;
 
             tableLayoutPanel.Width = ClientRectangle.Width;
@@ -500,29 +525,7 @@ namespace FileKeywordSearcher
                     {
                         timer.Stop();
 
-                        progressBar1.Visible = false;
-                        progressBar1 = null;
-
-                        txtProgressPercent.Visible = false;
-                        txtProgressPercent = null;
-
-                        txtProgressDetail.Visible = false;
-                        txtProgressDetail = null;
-
-                        txtProgressFileHasKeyWord.Visible = false;
-                        txtProgressFileHasKeyWord = null;
-
-                        txtProgressCurrentFile.Visible = false;
-                        txtProgressCurrentFile = null;
-
-                        // Remove ProgressBar from Form
-                        this.Controls.Remove(progressBar1);
-                        this.Controls.Remove(txtProgressPercent);
-                        this.Controls.Remove(txtProgressDetail);
-                        this.Controls.Remove(txtProgressFileHasKeyWord);
-                        this.Controls.Remove(txtProgressCurrentFile);
-                        InitializeTableLayoutResult();
-                        ControlsStatus(true);
+                        ClearProgressBar();
 
                         // Optionally unsubscribe from ProgressChanged event to prevent further updates
                         fileKeywordSearcher.ProgressChanged -= FileProcessor_ProgressChanged;
@@ -539,28 +542,48 @@ namespace FileKeywordSearcher
                 txtKeyWord.Enabled = true;
                 txtBrowser.Enabled = true;
                 btnBrowser.Enabled = true;
-                btnStartSearch.Enabled = true;
                 txtKeyWord.BackColor = Color.FromArgb(137, 190, 179);
                 txtBrowser.BackColor = Color.FromArgb(137, 190, 179);
                 btnBrowser.BackColor = Color.FromArgb(137, 190, 179);
-                btnStartSearch.BackColor = Color.FromArgb(137, 190, 179);
+                btnStartSearch.Text = "Search";
             }
             else
             {
                 txtKeyWord.Enabled = false;
                 txtBrowser.Enabled = false;
                 btnBrowser.Enabled = false;
-                btnStartSearch.Enabled = false;
                 txtKeyWord.BackColor = Color.LightGray;
                 txtBrowser.BackColor = Color.LightGray;
                 btnBrowser.BackColor = Color.LightGray;
-                btnStartSearch.BackColor = Color.LightGray;
+                btnStartSearch.Text = "End";
             }
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void ClearProgressBar()
         {
+            progressBar1.Visible = false;
+            progressBar1 = null;
 
+            txtProgressPercent.Visible = false;
+            txtProgressPercent = null;
+
+            txtProgressDetail.Visible = false;
+            txtProgressDetail = null;
+
+            txtProgressFileHasKeyWord.Visible = false;
+            txtProgressFileHasKeyWord = null;
+
+            txtProgressCurrentFile.Visible = false;
+            txtProgressCurrentFile = null;
+
+            // Remove ProgressBar from Form
+            this.Controls.Remove(progressBar1);
+            this.Controls.Remove(txtProgressPercent);
+            this.Controls.Remove(txtProgressDetail);
+            this.Controls.Remove(txtProgressFileHasKeyWord);
+            this.Controls.Remove(txtProgressCurrentFile);
+            InitializeTableLayoutResult();
+            ControlsStatus(true);
         }
     }
 }

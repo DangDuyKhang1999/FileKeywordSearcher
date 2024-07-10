@@ -14,6 +14,7 @@ using PowerPoint = Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
 using Microsoft.Office.Core;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 
 namespace FileKeywordSearcher
@@ -47,14 +48,17 @@ namespace FileKeywordSearcher
             ProgressChanged?.Invoke(this, (percent, m_iFileCount, m_iTotalFileCount, m_fileItems.Count, filePath)); // Trigger the ProgressChanged event with percent and filePath
         }
 
-        public bool HasKeyWord()
+        public void HasKeyWord(CancellationToken cancellationToken)
         {
-            bool iResult = false;
-
+ 
             try
             {
                 foreach (var file in m_totalFilePath)
                 {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return;
+                    }
                     string strLineMapping = "";
                     FileExtension fileExtension = GetFileExtension(file);
                     bool keywordFound = false;
@@ -107,7 +111,6 @@ namespace FileKeywordSearcher
                     {
                         FileItem fileItem = new FileItem(file, strLineMapping, fileExtension, bHasMultiKeyWord);
                         m_fileItems.Add(fileItem);
-                        iResult = true; // If at least one file is found, set result to true
                     }
                     m_iFileCount++;
                     int percentComplete = (int)((double)m_iFileCount / m_totalFilePath.Count * 100);
@@ -118,8 +121,6 @@ namespace FileKeywordSearcher
             {
                 // Handle other exceptions
             }
-
-            return iResult;
         }
 
         public int CountFiles(string directoryPath)
@@ -962,6 +963,14 @@ namespace FileKeywordSearcher
                 ".odp" => FileExtension.IgnoredExtension, // OpenDocument Presentation
                 ".dwf" => FileExtension.IgnoredExtension, // Design Web Format
                 ".jar" => FileExtension.IgnoredExtension, // Java Archive
+                ".enc" => FileExtension.IgnoredExtension, // Encoded File
+                ".lib" => FileExtension.IgnoredExtension, // Library File
+                ".pdb" => FileExtension.IgnoredExtension, // Program Database
+                ".exp" => FileExtension.IgnoredExtension, // Export File
+                ".asc" => FileExtension.IgnoredExtension, // ASCII Text File
+                ".obj" => FileExtension.IgnoredExtension, // Object File
+                ".xyz" => FileExtension.IgnoredExtension, // XYZ File
+                ".dmp" => FileExtension.IgnoredExtension, // Dump File
                 // ----------->
                 _ => FileExtension.Normal
             };

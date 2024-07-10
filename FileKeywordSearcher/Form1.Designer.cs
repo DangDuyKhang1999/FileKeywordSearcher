@@ -126,7 +126,6 @@ namespace FileKeywordSearcher
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "Form1";
             Text = "File Keyword Searcher";
-            Load += Form1_Load;
             ResumeLayout(false);
             PerformLayout();
         }
