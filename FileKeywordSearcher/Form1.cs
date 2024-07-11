@@ -13,7 +13,12 @@ namespace FileKeywordSearcher
     public partial class Form1 : Form
     {
         private CancellationTokenSource cancellationTokenSource;
-
+        private FileKeywordSearcher fileKeywordSearcher = null!;
+        private ProgressBar? progressBar1 = null!;
+        private Label? txtProgressPercent = null!;
+        private Label? txtProgressDetail = null!;
+        private Label? txtProgressFileHasKeyWord = null!;
+        private Label? txtProgressCurrentFile = null!;
         public enum FileExtension
         {
             Normal,
@@ -29,12 +34,6 @@ namespace FileKeywordSearcher
             IgnoredExtension,
         }
 
-        private FileKeywordSearcher fileKeywordSearcher = null!;
-        private ProgressBar? progressBar1 = null!;
-        private Label? txtProgressPercent = null!;
-        private Label? txtProgressDetail = null!;
-        private Label? txtProgressFileHasKeyWord = null!;
-        private Label? txtProgressCurrentFile = null!;
         public Form1()
         {
             InitializeComponent();
@@ -58,6 +57,39 @@ namespace FileKeywordSearcher
 
                 txtBrowser.Text = selectedFolderPath;
             }
+        }
+        private void FileProcessor_ProgressChanged(object sender, (int percent, int iFileCount, int iTotalFileCount, int iFileHasKeyWord, string strCurrentFile) e)
+        {
+            // Handle ProgressChanged event from fileProcessor
+            _ = this.Invoke((MethodInvoker)delegate ()
+            {
+                progressBar1.Value = e.percent;
+                progressBar1.Refresh(); // Ensure ProgressBar updates visually
+                txtProgressPercent.Text = e.percent.ToString() + "%";
+                txtProgressDetail.Text = e.iFileCount.ToString() + "/" + e.iTotalFileCount.ToString();
+                txtProgressFileHasKeyWord.Text = "Files containing keyword: " + e.iFileHasKeyWord.ToString();
+                txtProgressCurrentFile.Text = e.strCurrentFile;
+                Size textSize = TextRenderer.MeasureText(txtProgressCurrentFile.Text, txtProgressCurrentFile.Font, new Size(txtProgressCurrentFile.Width, int.MaxValue), TextFormatFlags.WordBreak);
+                txtProgressCurrentFile.Height = textSize.Height;
+
+                // Check if progress is complete (100%)
+                if (e.percent >= 100)
+                {
+                    // Remove ProgressBar from Form
+                    System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
+                    timer.Interval = 500;
+                    timer.Tick += (s, e) =>
+                    {
+                        timer.Stop();
+
+                        ClearProgressBar();
+
+                        // Optionally unsubscribe from ProgressChanged event to prevent further updates
+                        fileKeywordSearcher.ProgressChanged -= FileProcessor_ProgressChanged;
+                    };
+                    timer.Start();
+                }
+            });
         }
 
         private async void btnStartSearch_Click_1(object sender, EventArgs e)
@@ -333,6 +365,7 @@ namespace FileKeywordSearcher
             BringToForntControl();
         }
 
+
         private void txtBrowser_Leave(object sender, EventArgs e)
         {
             if (txtBrowser.Text == String.Empty)
@@ -506,37 +539,6 @@ namespace FileKeywordSearcher
             }
         }
 
-        private void FileProcessor_ProgressChanged(object sender, (int percent, int iFileCount, int iTotalFileCount, int iFileHasKeyWord, string strCurrentFile) e)
-        {
-            // Handle ProgressChanged event from fileProcessor
-            _ = this.Invoke((MethodInvoker)delegate ()
-            {
-                progressBar1.Value = e.percent;
-                progressBar1.Refresh(); // Ensure ProgressBar updates visually
-                txtProgressPercent.Text = e.percent.ToString() + "%";
-                txtProgressDetail.Text = e.iFileCount.ToString() + "/" + e.iTotalFileCount.ToString();
-                txtProgressFileHasKeyWord.Text = "Files containing keyword: " + e.iFileHasKeyWord.ToString();
-                txtProgressCurrentFile.Text = e.strCurrentFile;
-                // Check if progress is complete (100%)
-                if (e.percent >= 100)
-                {
-                    // Remove ProgressBar from Form
-                    System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
-                    timer.Interval = 500;
-                    timer.Tick += (s, e) =>
-                    {
-                        timer.Stop();
-
-                        ClearProgressBar();
-
-                        // Optionally unsubscribe from ProgressChanged event to prevent further updates
-                        fileKeywordSearcher.ProgressChanged -= FileProcessor_ProgressChanged;
-                    };
-                    timer.Start();
-                }
-            });
-        }
-
         private void ControlsStatus(bool isEnable)
         {
             if (isEnable)
@@ -563,30 +565,45 @@ namespace FileKeywordSearcher
 
         private void ClearProgressBar()
         {
-            progressBar1.Visible = false;
-            progressBar1 = null;
+            if (progressBar1 != null)
+            {
+                progressBar1.Visible = false;
+                this.Controls.Remove(progressBar1);
+                progressBar1 = null;
+            }
 
-            txtProgressPercent.Visible = false;
-            txtProgressPercent = null;
+            if (txtProgressPercent != null)
+            {
+                txtProgressPercent.Visible = false;
+                this.Controls.Remove(txtProgressPercent);
+                txtProgressPercent = null;
+            }
 
-            txtProgressDetail.Visible = false;
-            txtProgressDetail = null;
+            if (txtProgressDetail != null)
+            {
+                txtProgressDetail.Visible = false;
+                this.Controls.Remove(txtProgressDetail);
+                txtProgressDetail = null;
+            }
 
-            txtProgressFileHasKeyWord.Visible = false;
-            txtProgressFileHasKeyWord = null;
+            if (txtProgressFileHasKeyWord != null)
+            {
+                txtProgressFileHasKeyWord.Visible = false;
+                this.Controls.Remove(txtProgressFileHasKeyWord);
+                txtProgressFileHasKeyWord = null;
+            }
 
-            txtProgressCurrentFile.Visible = false;
-            txtProgressCurrentFile = null;
+            if (txtProgressCurrentFile != null)
+            {
+                txtProgressCurrentFile.Visible = false;
+                this.Controls.Remove(txtProgressCurrentFile);
+                txtProgressCurrentFile = null;
+            }
 
-            // Remove ProgressBar from Form
-            this.Controls.Remove(progressBar1);
-            this.Controls.Remove(txtProgressPercent);
-            this.Controls.Remove(txtProgressDetail);
-            this.Controls.Remove(txtProgressFileHasKeyWord);
-            this.Controls.Remove(txtProgressCurrentFile);
             InitializeTableLayoutResult();
             ControlsStatus(true);
         }
+
         private void BringToForntControl()
         {
            btnBrowser.BringToFront();

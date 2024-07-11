@@ -29,7 +29,7 @@ namespace FileKeywordSearcher
         public List<string> m_totalFilePath { get; set; } = new List<string>();
 
 
-        public event EventHandler<(int percent, int iFileCount, int iTotalFileCount, int iFileHasKeyWord, string strCurrentFile)> ProgressChanged;
+        public event EventHandler<(int percent, int iFileCount, int iTotalFileCount, int iFileHasKeyWord, string strCurrentFile)> ProgressChanged = delegate { };
 
         public FileKeywordSearcher(string strBrowser, string strKeyWord)
         {
@@ -822,9 +822,9 @@ namespace FileKeywordSearcher
 
         public bool CheckOldPowerPointForKeywordAndShapes(string filePath)
         {
-            PowerPoint.Application powerPointApp = null;
-            PowerPoint.Presentations presentations = null;
-            PowerPoint.Presentation presentation = null;
+            PowerPoint.Application? powerPointApp = null;
+            PowerPoint.Presentations? presentations = null;
+            PowerPoint.Presentation? presentation = null;
             bool hasKeyword = false;
 
             try
