@@ -308,7 +308,7 @@ namespace FileKeywordSearcher
             txtBrowser.Location = newLocation;
 
             tableLayoutPanel.Width = ClientRectangle.Width;
-            tableLayoutPanel.Height = ClientRectangle.Height - (ClientRectangle.Height - btnStartSearch.Location.Y - btnStartSearch.Height - 6);
+            tableLayoutPanel.Height = ClientRectangle.Height - ( btnStartSearch.Height + 9);
 
             foreach (Control control in tableLayoutPanel.Controls)
             {
@@ -330,6 +330,7 @@ namespace FileKeywordSearcher
                     }
                 }
             }
+            BringToForntControl();
         }
 
         private void txtBrowser_Leave(object sender, EventArgs e)
@@ -374,6 +375,7 @@ namespace FileKeywordSearcher
             UpdateProgressBarWidth();
             UpdateProgressBarPosition();
             UpdateProgressBarFont();
+            BringToForntControl();
         }
 
         // ProcessBar
@@ -584,6 +586,13 @@ namespace FileKeywordSearcher
             this.Controls.Remove(txtProgressCurrentFile);
             InitializeTableLayoutResult();
             ControlsStatus(true);
+        }
+        private void BringToForntControl()
+        {
+           btnBrowser.BringToFront();
+           txtBrowser.BringToFront();
+           txtKeyWord.BringToFront();
+           btnBrowser.BringToFront();
         }
     }
 }
