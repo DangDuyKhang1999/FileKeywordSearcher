@@ -37,6 +37,7 @@ namespace FileKeywordSearcher
         public Form1()
         {
             InitializeComponent();
+            cancellationTokenSource = new CancellationTokenSource();
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             StartPosition = FormStartPosition.CenterScreen;
             Resize += Form1_SizeChanged;
@@ -58,34 +59,60 @@ namespace FileKeywordSearcher
                 txtBrowser.Text = selectedFolderPath;
             }
         }
-        private void FileProcessor_ProgressChanged(object sender, (int percent, int iFileCount, int iTotalFileCount, int iFileHasKeyWord, string strCurrentFile) e)
+        private void FileProcessor_ProgressChanged(object? sender, (int percent, int iFileCount, int iTotalFileCount, int iFileHasKeyWord, string strCurrentFile) e)
         {
-            // Handle ProgressChanged event from fileProcessor
+            // Ensure UI updates are invoked on the UI thread
             _ = this.Invoke((MethodInvoker)delegate ()
             {
-                progressBar1.Value = e.percent;
-                progressBar1.Refresh(); // Ensure ProgressBar updates visually
-                txtProgressPercent.Text = e.percent.ToString() + "%";
-                txtProgressDetail.Text = e.iFileCount.ToString() + "/" + e.iTotalFileCount.ToString();
-                txtProgressFileHasKeyWord.Text = "Files containing keyword: " + e.iFileHasKeyWord.ToString();
-                txtProgressCurrentFile.Text = e.strCurrentFile;
-                Size textSize = TextRenderer.MeasureText(txtProgressCurrentFile.Text, txtProgressCurrentFile.Font, new Size(txtProgressCurrentFile.Width, int.MaxValue), TextFormatFlags.WordBreak);
-                txtProgressCurrentFile.Height = textSize.Height;
+                // Update ProgressBar
+                if (progressBar1 != null)
+                {
+                    progressBar1.Value = e.percent;
+                    progressBar1.Refresh(); // Ensure ProgressBar updates visually
+                }
+
+                // Update progress text details
+                if (txtProgressPercent != null)
+                {
+                    txtProgressPercent.Text = e.percent.ToString() + "%";
+                }
+
+                if (txtProgressDetail != null)
+                {
+                    txtProgressDetail.Text = $"{e.iFileCount}/{e.iTotalFileCount}";
+                }
+
+                if (txtProgressFileHasKeyWord != null)
+                {
+                    txtProgressFileHasKeyWord.Text = $"Files containing keyword: {e.iFileHasKeyWord}";
+                }
+
+                if (txtProgressCurrentFile != null)
+                {
+                    txtProgressCurrentFile.Text = e.strCurrentFile;
+                    // Resize txtProgressCurrentFile to fit its content
+                    Size textSize = TextRenderer.MeasureText(txtProgressCurrentFile.Text, txtProgressCurrentFile.Font, new Size(txtProgressCurrentFile.Width, int.MaxValue), TextFormatFlags.WordBreak);
+                    txtProgressCurrentFile.Height = textSize.Height;
+                }
 
                 // Check if progress is complete (100%)
                 if (e.percent >= 100)
                 {
-                    // Remove ProgressBar from Form
+                    // Schedule clearing ProgressBar after a short delay
                     System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
                     timer.Interval = 500;
-                    timer.Tick += (s, e) =>
+                    timer.Tick += (s, args) =>
                     {
                         timer.Stop();
 
+                        // Clear all progress UI elements
                         ClearProgressBar();
 
                         // Optionally unsubscribe from ProgressChanged event to prevent further updates
-                        fileKeywordSearcher.ProgressChanged -= FileProcessor_ProgressChanged;
+                        if (fileKeywordSearcher != null)
+                        {
+                            fileKeywordSearcher.ProgressChanged -= FileProcessor_ProgressChanged;
+                        }
                     };
                     timer.Start();
                 }

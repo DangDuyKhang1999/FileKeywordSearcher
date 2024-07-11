@@ -29,7 +29,8 @@ namespace FileKeywordSearcher
         public List<string> m_totalFilePath { get; set; } = new List<string>();
 
 
-        public event EventHandler<(int percent, int iFileCount, int iTotalFileCount, int iFileHasKeyWord, string strCurrentFile)> ProgressChanged = delegate { };
+        public event EventHandler<(int percent, int iFileCount, int iTotalFileCount, int iFileHasKeyWord, string strCurrentFile)>? ProgressChanged;
+
 
         public FileKeywordSearcher(string strBrowser, string strKeyWord)
         {
