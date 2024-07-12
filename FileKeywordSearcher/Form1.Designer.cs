@@ -37,6 +37,7 @@ namespace FileKeywordSearcher
             tableLayoutPanel = new TableLayoutPanel();
             btnStartSearch = new Button();
             txtKeyWord = new TextBox();
+            labelWithCheckBoxList = new LabelWithCheckBoxList();
             SuspendLayout();
             // 
             // btnBrowser
@@ -106,11 +107,19 @@ namespace FileKeywordSearcher
             txtKeyWord.Location = new Point(3, 385);
             txtKeyWord.Multiline = true;
             txtKeyWord.Name = "txtKeyWord";
-            txtKeyWord.Size = new Size(689, 29);
+            txtKeyWord.Size = new Size(584, 29);
             txtKeyWord.TabIndex = 1;
             txtKeyWord.Text = "Enter the search keyword!!!";
             txtKeyWord.Enter += txtKeyWord_Enter;
             txtKeyWord.Leave += txtKeyWord_Leave;
+            // 
+            // labelWithCheckBoxList
+            // 
+            labelWithCheckBoxList.Location = new System.Drawing.Point(btnBrowser.Location.X, txtKeyWord.Location.Y);
+            labelWithCheckBoxList.BorderStyle = BorderStyle.None;
+            labelWithCheckBoxList.Size = new Size(btnBrowser.Width, btnBrowser.Height);
+            labelWithCheckBoxList.BackColor = Color.FromArgb(137, 190, 179);
+            labelWithCheckBoxList.BringToFront();
             // 
             // Form1
             // 
@@ -123,6 +132,7 @@ namespace FileKeywordSearcher
             Controls.Add(tableLayoutPanel);
             Controls.Add(txtBrowser);
             Controls.Add(btnBrowser);
+            Controls.Add(labelWithCheckBoxList);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "Form1";
             Text = "File Keyword Searcher";
@@ -134,9 +144,9 @@ namespace FileKeywordSearcher
 
         private Button btnBrowser;
         private TextBox txtBrowser;
-        //private RichTextBox rtxtResult;
         private TableLayoutPanel tableLayoutPanel;
         private Button btnStartSearch;
         private TextBox txtKeyWord;
+        private LabelWithCheckBoxList labelWithCheckBoxList;
     }
 }

@@ -19,7 +19,7 @@ namespace FileKeywordSearcher
         private Label? txtProgressDetail = null!;
         private Label? txtProgressFileHasKeyWord = null!;
         private Label? txtProgressCurrentFile = null!;
-        public enum FileExtension
+        public enum eFileExtension
         {
             Normal,
             CSV,
@@ -32,6 +32,18 @@ namespace FileKeywordSearcher
             PowerPoint_old,
             PDF,
             IgnoredExtension,
+        }
+
+        public enum eTargetExtension
+        {
+            Text,
+            Log,
+            CSV,
+            Excel,
+            Word,
+            PowerPoint,
+            PDF,
+            All,
         }
 
         public Form1()
@@ -238,24 +250,24 @@ namespace FileKeywordSearcher
                     string linecode = "";
                     switch (fileItem.m_fileExtension)
                     {
-                        case FileExtension.Normal:
+                        case eFileExtension.Normal:
                             linecode = fileItem.m_bHasMultiKeyWord ? $"   Lines: {fileItem.m_strLineMapping}" : $"   Line: {fileItem.m_strLineMapping}";
                             break;
-                        case FileExtension.CSV:
+                        case eFileExtension.CSV:
                             linecode = fileItem.m_bHasMultiKeyWord ? $"   Cells: {fileItem.m_strLineMapping}" : $"   Cell: {fileItem.m_strLineMapping}";
                             break;
-                        case FileExtension.Excel:
-                        case FileExtension.Excel_Old:
+                        case eFileExtension.Excel:
+                        case eFileExtension.Excel_Old:
                             linecode = $"   {fileItem.m_strLineMapping}";
                             break;
-                        case FileExtension.PDF:
+                        case eFileExtension.PDF:
                             linecode = fileItem.m_bHasMultiKeyWord ? $"   Pages: {fileItem.m_strLineMapping}" : $"   Page: {fileItem.m_strLineMapping}";
                             break;
-                        case FileExtension.Word:
-                        case FileExtension.Word_RTF:
-                        case FileExtension.Word_Old:
-                        case FileExtension.PowerPoint:
-                        case FileExtension.PowerPoint_old:
+                        case eFileExtension.Word:
+                        case eFileExtension.Word_RTF:
+                        case eFileExtension.Word_Old:
+                        case eFileExtension.PowerPoint:
+                        case eFileExtension.PowerPoint_old:
                             linecode = $"   Keyword detected in the file";
                             break;
                         default:

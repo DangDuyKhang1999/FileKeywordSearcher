@@ -8,9 +8,9 @@ namespace FileKeywordSearcher
         public string m_strFileName { get; set; }
         public bool m_bHasMultiKeyWord { get; set; }
         public string m_strLineMapping { get; set; }
-        public FileExtension m_fileExtension { get; set; }
+        public eFileExtension m_fileExtension { get; set; }
 
-        public FileItem(string fileName, string strLineMapping = "", FileExtension fileExtension = default, bool bHasMultiKeyWord = false)
+        public FileItem(string fileName, string strLineMapping = "", eFileExtension fileExtension = default, bool bHasMultiKeyWord = false)
         {
             m_strFileName = fileName;
             m_strLineMapping = strLineMapping;

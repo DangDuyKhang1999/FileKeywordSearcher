@@ -61,49 +61,49 @@ namespace FileKeywordSearcher
                         return;
                     }
                     string strLineMapping = "";
-                    FileExtension fileExtension = GetFileExtension(file);
+                    eFileExtension fileExtension = GetFileExtension(file);
                     bool keywordFound = false;
                     bool bHasMultiKeyWord = false;
 
                     switch (fileExtension)
                     {
-                        case FileExtension.Normal:
+                        case eFileExtension.Normal:
                             keywordFound = CheckFileForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
                             break;
 
-                        case FileExtension.CSV:
+                        case eFileExtension.CSV:
                             keywordFound = CheckCSVForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
                             break;
 
-                        case FileExtension.Excel:
+                        case eFileExtension.Excel:
                             keywordFound = CheckExcelForKeywordAndShapes(file, ref strLineMapping);
                             break;
 
-                        case FileExtension.Excel_Old:
+                        case eFileExtension.Excel_Old:
                             keywordFound = CheckOldExcelForKeywordAndShapes(file, ref strLineMapping);
                             break;
 
-                        case FileExtension.PDF:
+                        case eFileExtension.PDF:
                             keywordFound = CheckPDFForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
                             break;
 
-                        case FileExtension.Word:
+                        case eFileExtension.Word:
                             keywordFound = CheckWordForKeywordAndShapes(file);
                             break;
 
-                        case FileExtension.Word_Old:
+                        case eFileExtension.Word_Old:
                             keywordFound = CheckOldWordForKeywordAndShapes(file);
                             break;
 
-                        case FileExtension.Word_RTF:
+                        case eFileExtension.Word_RTF:
                             keywordFound = CheckFileForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
                             break;
 
-                        case FileExtension.PowerPoint:
+                        case eFileExtension.PowerPoint:
                             keywordFound = CheckPowerPointForKeywordAndShapes(file);
                             break;
 
-                        case FileExtension.PowerPoint_old:
+                        case eFileExtension.PowerPoint_old:
                             keywordFound = CheckOldPowerPointForKeywordAndShapes(file);
                             break;
                     }
@@ -613,9 +613,6 @@ namespace FileKeywordSearcher
                     {
                         string text = PdfTextExtractor.GetTextFromPage(reader, i);
 
-                        // Process the text to remove unwanted spaces
-                        text = text.Replace(" ", "");
-
                         // Search for the keyword in the text (case insensitive)
                         if (text.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
                         {
@@ -905,75 +902,75 @@ namespace FileKeywordSearcher
             return hasKeyword;
         }
         //PowerPoint <----------
-        private FileExtension GetFileExtension(string fileName)
+        private eFileExtension GetFileExtension(string fileName)
         {
             string extension = Path.GetExtension(fileName).ToLowerInvariant();
             return extension switch
             {
-                ".csv" => FileExtension.CSV, // Comma-Separated Values
-                ".xls" => FileExtension.Excel_Old, // Microsoft Excel Spreadsheet (Legacy)
-                ".xlsx" => FileExtension.Excel, // Microsoft Excel Spreadsheet
-                ".doc" => FileExtension.Word_Old, // Microsoft Word document  (Legacy)
-                ".docx" => FileExtension.Word, // Microsoft Word document
-                ".docm" => FileExtension.Word, // Microsoft Word document with macros
-                ".rtf" => FileExtension.Word_RTF, // Microsoft Word document in Rich Text Format (RTF)
-                ".ppt" => FileExtension.PowerPoint_old, // Microsoft PowerPoint presentation (Legacy)
-                ".pptm" => FileExtension.PowerPoint, // Microsoft PowerPoint presentation with macros
-                ".pptx" => FileExtension.PowerPoint, // Microsoft PowerPoint presentation (Open XML format)
-                ".pdf" => FileExtension.PDF, // Portable Document Format
+                ".csv" => eFileExtension.CSV, // Comma-Separated Values
+                ".xls" => eFileExtension.Excel_Old, // Microsoft Excel Spreadsheet (Legacy)
+                ".xlsx" => eFileExtension.Excel, // Microsoft Excel Spreadsheet
+                ".doc" => eFileExtension.Word_Old, // Microsoft Word document  (Legacy)
+                ".docx" => eFileExtension.Word, // Microsoft Word document
+                ".docm" => eFileExtension.Word, // Microsoft Word document with macros
+                ".rtf" => eFileExtension.Word_RTF, // Microsoft Word document in Rich Text Format (RTF)
+                ".ppt" => eFileExtension.PowerPoint_old, // Microsoft PowerPoint presentation (Legacy)
+                ".pptm" => eFileExtension.PowerPoint, // Microsoft PowerPoint presentation with macros
+                ".pptx" => eFileExtension.PowerPoint, // Microsoft PowerPoint presentation (Open XML format)
+                ".pdf" => eFileExtension.PDF, // Portable Document Format
                 // Ignored Extension ----------->
-                ".exe" => FileExtension.IgnoredExtension, // Executable File
-                ".nupkg" => FileExtension.IgnoredExtension, // NuGet Package
-                ".dll" => FileExtension.IgnoredExtension, // Dynamic Link Library
-                ".bin" => FileExtension.IgnoredExtension, // Binary File
-                ".img" => FileExtension.IgnoredExtension, // Disk Image File
-                ".iso" => FileExtension.IgnoredExtension, // Optical Disc Image
-                ".jpg" => FileExtension.IgnoredExtension, // JPEG Image
-                ".jpeg" => FileExtension.IgnoredExtension, // JPEG Image 
-                ".png" => FileExtension.IgnoredExtension, // Portable Network Graphics
-                ".gif" => FileExtension.IgnoredExtension, // Graphics Interchange Format
-                ".bmp" => FileExtension.IgnoredExtension, // Bitmap Image
-                ".tiff" => FileExtension.IgnoredExtension, // Tagged Image File Format
-                ".mp3" => FileExtension.IgnoredExtension, // MPEG Audio Layer III
-                ".wav" => FileExtension.IgnoredExtension, // Waveform Audio File Format
-                ".flac" => FileExtension.IgnoredExtension, // Free Lossless Audio Codec
-                ".aac" => FileExtension.IgnoredExtension, // Advanced Audio Codec
-                ".ogg" => FileExtension.IgnoredExtension, // Ogg Vorbis
-                ".mp4" => FileExtension.IgnoredExtension, // MPEG-4 Video
-                ".mkv" => FileExtension.IgnoredExtension, // Matroska Video
-                ".avi" => FileExtension.IgnoredExtension, // Audio Video Interleave
-                ".mov" => FileExtension.IgnoredExtension, // QuickTime Movie
-                ".wmv" => FileExtension.IgnoredExtension, // Windows Media Video
-                ".zip" => FileExtension.IgnoredExtension, // ZIP Archive
-                ".rar" => FileExtension.IgnoredExtension, // RAR Archive
-                ".7z" => FileExtension.IgnoredExtension, // 7-Zip Archive
-                ".tar.gz" => FileExtension.IgnoredExtension, // Compressed Archive File
-                ".db" => FileExtension.IgnoredExtension, // Database File
-                ".mdb" => FileExtension.IgnoredExtension, // Microsoft Access Database
-                ".sqlite" => FileExtension.IgnoredExtension, // SQLite Database
-                ".psd" => FileExtension.IgnoredExtension, // Adobe Photoshop Document
-                ".ai" => FileExtension.IgnoredExtension, // Adobe Illustrator Document
-                ".dwg" => FileExtension.IgnoredExtension, // AutoCAD Drawing
-                ".sys" => FileExtension.IgnoredExtension, // System File
-                ".dat" => FileExtension.IgnoredExtension, // Data File
-                ".wma" => FileExtension.IgnoredExtension, // Windows Media Audio
-                ".ps" => FileExtension.IgnoredExtension, // PostScript File
-                ".key" => FileExtension.IgnoredExtension, // Keynote Presentation
-                ".odt" => FileExtension.IgnoredExtension, // OpenDocument Text Document
-                ".ods" => FileExtension.IgnoredExtension, // OpenDocument Spreadsheet
-                ".odp" => FileExtension.IgnoredExtension, // OpenDocument Presentation
-                ".dwf" => FileExtension.IgnoredExtension, // Design Web Format
-                ".jar" => FileExtension.IgnoredExtension, // Java Archive
-                ".enc" => FileExtension.IgnoredExtension, // Encoded File
-                ".lib" => FileExtension.IgnoredExtension, // Library File
-                ".pdb" => FileExtension.IgnoredExtension, // Program Database
-                ".exp" => FileExtension.IgnoredExtension, // Export File
-                ".asc" => FileExtension.IgnoredExtension, // ASCII Text File
-                ".obj" => FileExtension.IgnoredExtension, // Object File
-                ".xyz" => FileExtension.IgnoredExtension, // XYZ File
-                ".dmp" => FileExtension.IgnoredExtension, // Dump File
+                ".exe" => eFileExtension.IgnoredExtension, // Executable File
+                ".nupkg" => eFileExtension.IgnoredExtension, // NuGet Package
+                ".dll" => eFileExtension.IgnoredExtension, // Dynamic Link Library
+                ".bin" => eFileExtension.IgnoredExtension, // Binary File
+                ".img" => eFileExtension.IgnoredExtension, // Disk Image File
+                ".iso" => eFileExtension.IgnoredExtension, // Optical Disc Image
+                ".jpg" => eFileExtension.IgnoredExtension, // JPEG Image
+                ".jpeg" => eFileExtension.IgnoredExtension, // JPEG Image 
+                ".png" => eFileExtension.IgnoredExtension, // Portable Network Graphics
+                ".gif" => eFileExtension.IgnoredExtension, // Graphics Interchange Format
+                ".bmp" => eFileExtension.IgnoredExtension, // Bitmap Image
+                ".tiff" => eFileExtension.IgnoredExtension, // Tagged Image File Format
+                ".mp3" => eFileExtension.IgnoredExtension, // MPEG Audio Layer III
+                ".wav" => eFileExtension.IgnoredExtension, // Waveform Audio File Format
+                ".flac" => eFileExtension.IgnoredExtension, // Free Lossless Audio Codec
+                ".aac" => eFileExtension.IgnoredExtension, // Advanced Audio Codec
+                ".ogg" => eFileExtension.IgnoredExtension, // Ogg Vorbis
+                ".mp4" => eFileExtension.IgnoredExtension, // MPEG-4 Video
+                ".mkv" => eFileExtension.IgnoredExtension, // Matroska Video
+                ".avi" => eFileExtension.IgnoredExtension, // Audio Video Interleave
+                ".mov" => eFileExtension.IgnoredExtension, // QuickTime Movie
+                ".wmv" => eFileExtension.IgnoredExtension, // Windows Media Video
+                ".zip" => eFileExtension.IgnoredExtension, // ZIP Archive
+                ".rar" => eFileExtension.IgnoredExtension, // RAR Archive
+                ".7z" => eFileExtension.IgnoredExtension, // 7-Zip Archive
+                ".tar.gz" => eFileExtension.IgnoredExtension, // Compressed Archive File
+                ".db" => eFileExtension.IgnoredExtension, // Database File
+                ".mdb" => eFileExtension.IgnoredExtension, // Microsoft Access Database
+                ".sqlite" => eFileExtension.IgnoredExtension, // SQLite Database
+                ".psd" => eFileExtension.IgnoredExtension, // Adobe Photoshop Document
+                ".ai" => eFileExtension.IgnoredExtension, // Adobe Illustrator Document
+                ".dwg" => eFileExtension.IgnoredExtension, // AutoCAD Drawing
+                ".sys" => eFileExtension.IgnoredExtension, // System File
+                ".dat" => eFileExtension.IgnoredExtension, // Data File
+                ".wma" => eFileExtension.IgnoredExtension, // Windows Media Audio
+                ".ps" => eFileExtension.IgnoredExtension, // PostScript File
+                ".key" => eFileExtension.IgnoredExtension, // Keynote Presentation
+                ".odt" => eFileExtension.IgnoredExtension, // OpenDocument Text Document
+                ".ods" => eFileExtension.IgnoredExtension, // OpenDocument Spreadsheet
+                ".odp" => eFileExtension.IgnoredExtension, // OpenDocument Presentation
+                ".dwf" => eFileExtension.IgnoredExtension, // Design Web Format
+                ".jar" => eFileExtension.IgnoredExtension, // Java Archive
+                ".enc" => eFileExtension.IgnoredExtension, // Encoded File
+                ".lib" => eFileExtension.IgnoredExtension, // Library File
+                ".pdb" => eFileExtension.IgnoredExtension, // Program Database
+                ".exp" => eFileExtension.IgnoredExtension, // Export File
+                ".asc" => eFileExtension.IgnoredExtension, // ASCII Text File
+                ".obj" => eFileExtension.IgnoredExtension, // Object File
+                ".xyz" => eFileExtension.IgnoredExtension, // XYZ File
+                ".dmp" => eFileExtension.IgnoredExtension, // Dump File
                 // ----------->
-                _ => FileExtension.Normal
+                _ => eFileExtension.Normal
             };
         }
     }
