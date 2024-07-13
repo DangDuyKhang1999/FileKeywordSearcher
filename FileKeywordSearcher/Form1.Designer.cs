@@ -115,6 +115,7 @@ namespace FileKeywordSearcher
             // 
             // labelWithCheckBoxList
             // 
+            labelWithCheckBoxList.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             labelWithCheckBoxList.BackColor = Color.FromArgb(137, 190, 179);
             labelWithCheckBoxList.Location = new Point(589, 385);
             labelWithCheckBoxList.Name = "labelWithCheckBoxList";
@@ -129,6 +130,7 @@ namespace FileKeywordSearcher
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(238, 245, 255);
             ClientSize = new Size(800, 449);
+            MinimumSize = new Size(550, 300);
             Controls.Add(txtKeyWord);
             Controls.Add(btnStartSearch);
             Controls.Add(tableLayoutPanel);
@@ -144,11 +146,11 @@ namespace FileKeywordSearcher
 
         #endregion
 
-        private Button btnBrowser;
+        private TextBox txtKeyWord;
         private TextBox txtBrowser;
         private TableLayoutPanel tableLayoutPanel;
+        private Button btnBrowser;
         private Button btnStartSearch;
-        private TextBox txtKeyWord;
         private LabelWithCheckBoxList labelWithCheckBoxList;
     }
 }

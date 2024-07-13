@@ -348,10 +348,15 @@ namespace FileKeywordSearcher
             txtBrowser.Width = ClientRectangle.Width - (ClientRectangle.Width - btnBrowser.Location.X + 5);
             txtBrowser.Height = btnBrowser.Height;
 
-            Point newLocation = txtBrowser.Location;
-            newLocation.Y = btnBrowser.Location.Y;
-            newLocation.X = tableLayoutPanel.Location.X;
-            txtBrowser.Location = newLocation;
+            Point newtxtBrowser = txtBrowser.Location;
+            newtxtBrowser.Y = btnBrowser.Location.Y;
+            newtxtBrowser.X = tableLayoutPanel.Location.X;
+            txtBrowser.Location = newtxtBrowser;
+
+            Point newtxtKeyWord = txtBrowser.Location;
+            newtxtKeyWord.Y = btnStartSearch.Location.Y;
+            newtxtKeyWord.X = tableLayoutPanel.Location.X;
+            txtKeyWord.Location = newtxtKeyWord;
 
             tableLayoutPanel.Width = ClientRectangle.Width;
             tableLayoutPanel.Height = ClientRectangle.Height - (btnStartSearch.Height + 9);
@@ -560,9 +565,11 @@ namespace FileKeywordSearcher
                 txtKeyWord.Enabled = true;
                 txtBrowser.Enabled = true;
                 btnBrowser.Enabled = true;
+                labelWithCheckBoxList.Enabled = true;
                 txtKeyWord.BackColor = Color.FromArgb(137, 190, 179);
                 txtBrowser.BackColor = Color.FromArgb(137, 190, 179);
                 btnBrowser.BackColor = Color.FromArgb(137, 190, 179);
+                labelWithCheckBoxList.BackColor = Color.FromArgb(137, 190, 179);
                 btnStartSearch.Text = "Search";
             }
             else
@@ -570,9 +577,11 @@ namespace FileKeywordSearcher
                 txtKeyWord.Enabled = false;
                 txtBrowser.Enabled = false;
                 btnBrowser.Enabled = false;
+                labelWithCheckBoxList.Enabled = false;
                 txtKeyWord.BackColor = Color.LightGray;
                 txtBrowser.BackColor = Color.LightGray;
                 btnBrowser.BackColor = Color.LightGray;
+                labelWithCheckBoxList.BackColor = Color.LightGray;
                 btnStartSearch.Text = "End";
             }
         }
