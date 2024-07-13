@@ -581,6 +581,8 @@ namespace FileKeywordSearcher
                 txtKeyWord.BackColor = Color.LightGray;
                 txtBrowser.BackColor = Color.LightGray;
                 btnBrowser.BackColor = Color.LightGray;
+                btnBrowser.FlatStyle = FlatStyle.Flat;
+                btnBrowser.FlatAppearance.BorderSize = 0;
                 labelWithCheckBoxList.BackColor = Color.LightGray;
                 btnStartSearch.Text = "End";
             }

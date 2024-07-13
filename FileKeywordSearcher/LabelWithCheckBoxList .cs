@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 using static FileKeywordSearcher.Form1;
 
@@ -13,6 +14,7 @@ namespace FileKeywordSearcher
         private bool _isDroppedDown;
         private bool initCheck = false;
         public HashSet<eTargetExtension> m_SelectedItems { get; } = new HashSet<eTargetExtension>();
+
         public LabelWithCheckBoxList()
         {
             _checkedListBox = new CheckedListBox
@@ -30,7 +32,14 @@ namespace FileKeywordSearcher
                 AutoSizeMode = AutoSizeMode.GrowOnly
             };
             _popupForm.Controls.Add(_checkedListBox);
+            _popupForm.Deactivate += PopupForm_Deactivate;
+
             this.Click += LabelWithCheckBoxList_Click;
+        }
+
+        private void PopupForm_Deactivate(object sender, EventArgs e)
+        {
+            HidePopup();
         }
 
         private void LabelWithCheckBoxList_Click(object sender, EventArgs e)
@@ -77,6 +86,14 @@ namespace FileKeywordSearcher
             }
             else
             {
+                HidePopup();
+            }
+        }
+
+        private void HidePopup()
+        {
+            if (_isDroppedDown)
+            {
                 _popupForm.Hide();
                 _isDroppedDown = false;
             }
@@ -94,12 +111,13 @@ namespace FileKeywordSearcher
             {
                 this.m_SelectedItems.Remove(selectedItem);
             }
+
             if (m_SelectedItems.Count > 0)
             {
                 UpdateLabelText();
             }
             else
-            { 
+            {
                 this.Text = "All";
                 m_SelectedItems.Clear();
             }
@@ -121,6 +139,5 @@ namespace FileKeywordSearcher
                 this.Text = string.Join(", ", this.m_SelectedItems);
             }
         }
-
     }
 }
