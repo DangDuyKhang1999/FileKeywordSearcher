@@ -62,19 +62,6 @@ namespace FileKeywordSearcher
                 _popupForm.Hide();
                 initCheck = true;
                 ShowPopup();
-                if (_checkedListBox.Items.Count > 0)
-                {
-                    _checkedListBox.SetItemChecked(0, true); // Last item
-                }
-            }
-
-            // Example: Accessing parent form's height
-            if (ParentForm != null)
-            {
-                int formHeight = ParentForm.Height;
-                // Now you can use 'formHeight' as needed
-                // For example:
-                Console.WriteLine($"Parent form height: {formHeight}");
             }
         }
 
