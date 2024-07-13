@@ -77,9 +77,7 @@ namespace FileKeywordSearcher
                 if (txtProgressCurrentFile != null)
                 {
                     txtProgressCurrentFile.Text = e.strCurrentFile;
-                    // Resize txtProgressCurrentFile to fit its content
-                    Size textSize = TextRenderer.MeasureText(txtProgressCurrentFile.Text, txtProgressCurrentFile.Font, new Size(txtProgressCurrentFile.Width, int.MaxValue), TextFormatFlags.WordBreak);
-                    txtProgressCurrentFile.Height = textSize.Height;
+                    txtProgressCurrentFile.Height = txtProgressCurrentFile.GetPreferredSize(new Size(txtProgressCurrentFile.Width, int.MaxValue)).Height;
                 }
 
                 // Check if progress is complete (100%)
@@ -516,7 +514,7 @@ namespace FileKeywordSearcher
                 txtProgressPercent.Height = progressBar1.Height;
 
                 txtProgressDetail.Width = progressBar1.Width / 2;
-                txtProgressDetail.Height = progressBar1.Height + 20;
+                txtProgressDetail.Height = txtProgressDetail.GetPreferredSize(new Size(txtProgressDetail.Width, int.MaxValue)).Height;
 
                 txtProgressFileHasKeyWord.Width = progressBar1.Width / 2;
                 txtProgressFileHasKeyWord.Height = progressBar1.Height + 20;
@@ -538,7 +536,7 @@ namespace FileKeywordSearcher
                 txtProgressPercent.Location = new Point(progressBarX, progressBarY - txtProgressPercent.Height - 10);
                 txtProgressDetail.Location = new Point(progressBarX, progressBarY + progressBar1.Height);
                 txtProgressFileHasKeyWord.Location = new Point(progressBarX + progressBar1.Width / 2, progressBarY + progressBar1.Height);
-                txtProgressCurrentFile.Location = new Point(progressBarX, txtProgressDetail.Location.Y + txtProgressCurrentFile.Height);
+                txtProgressCurrentFile.Location = new Point(progressBarX, txtProgressDetail.Location.Y + txtProgressDetail.Height);
             }
         }
 
