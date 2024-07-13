@@ -115,11 +115,13 @@ namespace FileKeywordSearcher
             // 
             // labelWithCheckBoxList
             // 
-            labelWithCheckBoxList.Location = new System.Drawing.Point(btnBrowser.Location.X, txtKeyWord.Location.Y);
-            labelWithCheckBoxList.BorderStyle = BorderStyle.None;
-            labelWithCheckBoxList.Size = new Size(btnBrowser.Width, btnBrowser.Height);
             labelWithCheckBoxList.BackColor = Color.FromArgb(137, 190, 179);
-            labelWithCheckBoxList.BringToFront();
+            labelWithCheckBoxList.Location = new Point(589, 385);
+            labelWithCheckBoxList.Name = "labelWithCheckBoxList";
+            labelWithCheckBoxList.Size = new Size(103, 29);
+            labelWithCheckBoxList.TabIndex = 5;
+            labelWithCheckBoxList.Text = "All";
+            labelWithCheckBoxList.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // Form1
             // 

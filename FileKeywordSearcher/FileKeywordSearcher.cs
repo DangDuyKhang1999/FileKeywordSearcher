@@ -26,18 +26,22 @@ namespace FileKeywordSearcher
         public int m_iFileCount { get; set; }
         public int m_iTotalFileCount { get; set; }
         public List<FileItem> m_fileItems { get; set; } = new List<FileItem>();
-        public List<string> m_totalFilePath { get; set; } = new List<string>();
+        public List<FileItem> m_totalFilePath { get; set; } = new List<FileItem>();
 
+        public static HashSet<eTargetExtension> m_ListsTargerListBox { get; set; } = new HashSet<eTargetExtension> {};
+        public static List<eFileExtension> m_ListsTargerExcute { get; set; } = new List<eFileExtension> {};
 
         public event EventHandler<(int percent, int iFileCount, int iTotalFileCount, int iFileHasKeyWord, string strCurrentFile)>? ProgressChanged;
 
 
-        public FileKeywordSearcher(string strBrowser, string strKeyWord)
+        public FileKeywordSearcher(string strBrowser, string strKeyWord, HashSet<eTargetExtension> ListsTargerListBox)
         {
             m_iFileCount = 0;
             m_iTotalFileCount = 0;
             m_strBrowser = strBrowser;
             m_strKeyWord = strKeyWord;
+            m_ListsTargerListBox = ListsTargerListBox;
+            ConvertEnumToFileExtension();
         }
 
         public List<FileItem> GetFileItems()
@@ -54,68 +58,69 @@ namespace FileKeywordSearcher
  
             try
             {
-                foreach (var file in m_totalFilePath)
+                foreach (var fileItem in m_totalFilePath)
                 {
                     if (cancellationToken.IsCancellationRequested)
                     {
                         return;
                     }
-                    string strLineMapping = "";
-                    eFileExtension fileExtension = GetFileExtension(file);
                     bool keywordFound = false;
+                    string strLineMapping = "";
                     bool bHasMultiKeyWord = false;
 
-                    switch (fileExtension)
+                    switch (fileItem.m_fileExtension)
                     {
                         case eFileExtension.Normal:
-                            keywordFound = CheckFileForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
+                            keywordFound = CheckFileForKeyword(fileItem.m_strFileName, ref strLineMapping, ref bHasMultiKeyWord);
                             break;
 
                         case eFileExtension.CSV:
-                            keywordFound = CheckCSVForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
+                            keywordFound = CheckCSVForKeyword(fileItem.m_strFileName, ref strLineMapping, ref bHasMultiKeyWord);
                             break;
 
                         case eFileExtension.Excel:
-                            keywordFound = CheckExcelForKeywordAndShapes(file, ref strLineMapping);
+                            keywordFound = CheckExcelForKeywordAndShapes(fileItem.m_strFileName, ref strLineMapping);
                             break;
 
                         case eFileExtension.Excel_Old:
-                            keywordFound = CheckOldExcelForKeywordAndShapes(file, ref strLineMapping);
+                            keywordFound = CheckOldExcelForKeywordAndShapes(fileItem.m_strFileName, ref strLineMapping);
                             break;
 
                         case eFileExtension.PDF:
-                            keywordFound = CheckPDFForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
+                            keywordFound = CheckPDFForKeyword(fileItem.m_strFileName, ref strLineMapping, ref bHasMultiKeyWord);
                             break;
 
                         case eFileExtension.Word:
-                            keywordFound = CheckWordForKeywordAndShapes(file);
+                            keywordFound = CheckWordForKeywordAndShapes(fileItem.m_strFileName);
                             break;
 
                         case eFileExtension.Word_Old:
-                            keywordFound = CheckOldWordForKeywordAndShapes(file);
+                            keywordFound = CheckOldWordForKeywordAndShapes(fileItem.m_strFileName);
                             break;
 
                         case eFileExtension.Word_RTF:
-                            keywordFound = CheckFileForKeyword(file, ref strLineMapping, ref bHasMultiKeyWord);
+                            keywordFound = CheckFileForKeyword(fileItem.m_strFileName, ref strLineMapping, ref bHasMultiKeyWord);
                             break;
 
                         case eFileExtension.PowerPoint:
-                            keywordFound = CheckPowerPointForKeywordAndShapes(file);
+                            keywordFound = CheckPowerPointForKeywordAndShapes(fileItem.m_strFileName);
                             break;
 
                         case eFileExtension.PowerPoint_old:
-                            keywordFound = CheckOldPowerPointForKeywordAndShapes(file);
+                            keywordFound = CheckOldPowerPointForKeywordAndShapes(fileItem.m_strFileName);
                             break;
                     }
 
                     if (keywordFound)
                     {
-                        FileItem fileItem = new FileItem(file, strLineMapping, fileExtension, bHasMultiKeyWord);
+                        //  FileItem fileItemCheck = new FileItem(fileItem.m_strFileName, strLineMapping, fileExtension, bHasMultiKeyWord);
+                        fileItem.m_strLineMapping = strLineMapping;
+                        fileItem.m_bHasMultiKeyWord = bHasMultiKeyWord;
                         m_fileItems.Add(fileItem);
                     }
                     m_iFileCount++;
                     int percentComplete = (int)((double)m_iFileCount / m_totalFilePath.Count * 100);
-                    OnProgressChanged(percentComplete, file);
+                    OnProgressChanged(percentComplete, fileItem.m_strFileName);
                 }
             }
             catch (Exception)
@@ -134,8 +139,13 @@ namespace FileKeywordSearcher
                 // Count files in the current directory
                 foreach (var file in Directory.GetFiles(directoryPath))
                 {
-                    totalCount++;
-                    m_totalFilePath.Add(file); // Add file path to the list
+                    eFileExtension fileExtension = GetFileExtension(file);
+                    if (CheckTagert(fileExtension))
+                    {
+                        FileItem fileItemCheck = new FileItem(file, "", fileExtension, false);
+                        totalCount++;
+                        m_totalFilePath.Add(fileItemCheck); // Add fileItem path to the list
+                    }
                 }
 
                 // Recursively count files in subdirectories
@@ -176,10 +186,10 @@ namespace FileKeywordSearcher
 
             try
             {
-                // Read all lines from the file
+                // Read all lines from the fileItem
                 string[] lines = File.ReadAllLines(filePath);
 
-                // Loop through each line in the file
+                // Loop through each line in the fileItem
                 for (int i = 0; i < lines.Length; i++)
                 {
                     // Check if the current line contains the keyword (case insensitive)
@@ -193,14 +203,14 @@ namespace FileKeywordSearcher
             }
             catch (Exception)
             {
-                // Handle exceptions such as file not found, access denied, etc.
-                //MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
+                // Handle exceptions such as fileItem not found, access denied, etc.
+                //MessageBox.Show($"Error reading fileItem {filePath}: {ex.Message}");
             }
             if (keywordLines.Count > 1)
             {
                 bHasMultiKeyWord = true;
             }
-            // Check if any keyword was found in the file
+            // Check if any keyword was found in the fileItem
             if (bHasKeyWord)
             {
                 // If keywords were found, convert the list of line numbers to a string
@@ -222,10 +232,10 @@ namespace FileKeywordSearcher
 
             try
             {
-                // Read all lines from the CSV file
+                // Read all lines from the CSV fileItem
                 string[] lines = File.ReadAllLines(filePath);
 
-                // Loop through each line in the file
+                // Loop through each line in the fileItem
                 for (int i = 0; i < lines.Length; i++)
                 {
                     // Split the line into cells (assuming comma as delimiter)
@@ -247,14 +257,14 @@ namespace FileKeywordSearcher
             }
             catch (Exception)
             {
-                // Handle exceptions such as file not found, access denied, etc.
-                //MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
+                // Handle exceptions such as fileItem not found, access denied, etc.
+                //MessageBox.Show($"Error reading fileItem {filePath}: {ex.Message}");
             }
             if (keywordCells.Count > 1)
             {
                 bHasMultiKeyWord = true;
             }
-            // Check if any keyword was found in the file
+            // Check if any keyword was found in the fileItem
             if (bHasKeyWord)
             {
                 // If keywords were found, convert the list of cell positions to a string
@@ -463,8 +473,8 @@ namespace FileKeywordSearcher
             }
             catch (Exception)
             {
-                // Handle exceptions such as file not found, access denied, etc.
-                //MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
+                // Handle exceptions such as fileItem not found, access denied, etc.
+                //MessageBox.Show($"Error reading fileItem {filePath}: {ex.Message}");
             }
 
             // Return whether the keyword was found or not
@@ -590,8 +600,8 @@ namespace FileKeywordSearcher
             }
             catch (Exception)
             {
-                // Handle exceptions such as file not found, access denied, etc.
-                //MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
+                // Handle exceptions such as fileItem not found, access denied, etc.
+                //MessageBox.Show($"Error reading fileItem {filePath}: {ex.Message}");
             }
 
             // Return whether the keyword was found or not
@@ -605,10 +615,10 @@ namespace FileKeywordSearcher
 
             try
             {
-                // Open the PDF file
+                // Open the PDF fileItem
                 using (PdfReader reader = new PdfReader(filePath))
                 {
-                    // Iterate through each page in the PDF file
+                    // Iterate through each page in the PDF fileItem
                     for (int i = 1; i <= reader.NumberOfPages; i++)
                     {
                         string text = PdfTextExtractor.GetTextFromPage(reader, i);
@@ -625,8 +635,8 @@ namespace FileKeywordSearcher
             }
             catch (Exception)
             {
-                // Handle exceptions such as file not found, access denied, etc.
-                //MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
+                // Handle exceptions such as fileItem not found, access denied, etc.
+                //MessageBox.Show($"Error reading fileItem {filePath}: {ex.Message}");
             }
 
             // Build strKeywordMapping from the set of pagesWithKeyword
@@ -706,8 +716,8 @@ namespace FileKeywordSearcher
             }
             catch (Exception)
             {
-                // Handle exceptions such as file not found, access denied, etc.
-                //MessageBox.Show($"Error reading file {filePath}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // Handle exceptions such as fileItem not found, access denied, etc.
+                //MessageBox.Show($"Error reading fileItem {filePath}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
 
@@ -735,8 +745,8 @@ namespace FileKeywordSearcher
             }
             catch (Exception)
             {
-                // Handle exceptions such as file not found, access denied, etc.
-                //MessageBox.Show($"Error reading file {filePath}: {ex.Message}");
+                // Handle exceptions such as fileItem not found, access denied, etc.
+                //MessageBox.Show($"Error reading fileItem {filePath}: {ex.Message}");
                 return false; // Return false if an error occurs
             }
         }
@@ -809,8 +819,8 @@ namespace FileKeywordSearcher
             }
             catch (Exception)
             {
-                // Handle exceptions such as file not found, access denied, etc.
-                //MessageBox.Show($"Error reading file {filePath}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // Handle exceptions such as fileItem not found, access denied, etc.
+                //MessageBox.Show($"Error reading fileItem {filePath}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
 
@@ -884,8 +894,8 @@ namespace FileKeywordSearcher
             }
             catch (Exception)
             {
-                // Handle exceptions such as file not found, access denied, etc.
-                // string errorMessage = $"Error reading .ppt file {filePath}: {ex.Message}. The machine is unable to read the PowerPoint .ppt file. This might be due to PowerPoint not being installed on the machine.";
+                // Handle exceptions such as fileItem not found, access denied, etc.
+                // string errorMessage = $"Error reading .ppt fileItem {filePath}: {ex.Message}. The machine is unable to read the PowerPoint .ppt fileItem. This might be due to PowerPoint not being installed on the machine.";
                 //MessageBox.Show(errorMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
@@ -972,6 +982,57 @@ namespace FileKeywordSearcher
                 // ----------->
                 _ => eFileExtension.Normal
             };
+        }
+        private void ConvertEnumToFileExtension()
+        {
+            m_ListsTargerExcute.Clear();
+            foreach (var item in m_ListsTargerListBox)
+            {
+                switch (item)
+                {
+                    case eTargetExtension.PlainText:
+                        m_ListsTargerExcute.Add(eFileExtension.Normal);
+                        break;
+                    case eTargetExtension.Log:
+                        m_ListsTargerExcute.Add(eFileExtension.Normal);
+                        break;
+                    case eTargetExtension.CSV:
+                        m_ListsTargerExcute.Add(eFileExtension.CSV);
+                        break;
+                    case eTargetExtension.Excel:
+                        m_ListsTargerExcute.Add(eFileExtension.Excel);
+                        m_ListsTargerExcute.Add(eFileExtension.Excel_Old);
+                        break;
+                    case eTargetExtension.Word:
+                        m_ListsTargerExcute.Add(eFileExtension.Word);
+                        m_ListsTargerExcute.Add(eFileExtension.Word_Old);
+                        m_ListsTargerExcute.Add(eFileExtension.Word_RTF);
+                        break;
+                    case eTargetExtension.PowerPoint:
+                        m_ListsTargerExcute.Add(eFileExtension.PowerPoint);
+                        m_ListsTargerExcute.Add(eFileExtension.PowerPoint_old);
+                        break;
+                    case eTargetExtension.PDF:
+                        m_ListsTargerExcute.Add(eFileExtension.PDF);
+                        break;
+                    default:
+                        m_ListsTargerExcute.Clear();
+                        return;
+                }
+            }
+        }
+        private bool CheckTagert(eFileExtension fileExtension)
+        {
+            if (m_ListsTargerExcute == null)
+            {
+                return false;
+            }
+            //No filter
+            if (m_ListsTargerExcute.Count == 0) 
+            { 
+                return true; 
+            }
+            return m_ListsTargerExcute.Contains(fileExtension);
         }
     }
 }

@@ -12,13 +12,13 @@ namespace FileKeywordSearcher
         private Form _popupForm;
         private bool _isDroppedDown;
         private bool initCheck = false;
-        public List<object> SelectedItems { get; } = new List<object>();
-
+        public HashSet<eTargetExtension> m_SelectedItems { get; } = new HashSet<eTargetExtension>();
         public LabelWithCheckBoxList()
         {
             _checkedListBox = new CheckedListBox
             {
-                CheckOnClick = true
+                CheckOnClick = true,
+                BackColor = Color.FromArgb(190, 217, 217),
             };
             _checkedListBox.ItemCheck += CheckedListBox_ItemCheck;
 
@@ -30,7 +30,6 @@ namespace FileKeywordSearcher
                 AutoSizeMode = AutoSizeMode.GrowOnly
             };
             _popupForm.Controls.Add(_checkedListBox);
-
             this.Click += LabelWithCheckBoxList_Click;
         }
 
@@ -42,11 +41,14 @@ namespace FileKeywordSearcher
             }
             else
             {
-                // :D
                 _popupForm.Show();
                 _popupForm.Hide();
                 initCheck = true;
                 ShowPopup();
+                if (_checkedListBox.Items.Count > 0)
+                {
+                    _checkedListBox.SetItemChecked(0, true); // Last item
+                }
             }
         }
 
@@ -57,20 +59,14 @@ namespace FileKeywordSearcher
                 _checkedListBox.Items.Clear();
                 foreach (var item in Enum.GetValues(typeof(eTargetExtension)))
                 {
-                    _checkedListBox.Items.Add(item, this.SelectedItems.Contains(item));
+                    _checkedListBox.Items.Add(item, this.m_SelectedItems.Contains((eTargetExtension)item));
                 }
 
-                // Calculate the height needed to display all items without scroll
-                int totalHeight = _checkedListBox.ItemHeight * _checkedListBox.Items.Count;
-                totalHeight = Math.Min(totalHeight, Screen.PrimaryScreen.WorkingArea.Height / 2); // Limit height if too tall
+                int totalHeight = _checkedListBox.ItemHeight * (_checkedListBox.Items.Count + 1);
+                totalHeight = Math.Min(totalHeight, Screen.PrimaryScreen.WorkingArea.Height / 2);
 
-                // Set checkedListBox size
                 _checkedListBox.Size = new Size(103, totalHeight);
-
-                // Set popupForm size
                 _popupForm.ClientSize = new Size(103, _checkedListBox.Height);
-
-                // Set maximum width for the popup form
                 _popupForm.MaximumSize = new Size(103, _checkedListBox.Height);
 
                 var point = this.PointToScreen(new Point(0, this.Height));
@@ -88,30 +84,43 @@ namespace FileKeywordSearcher
 
         private void CheckedListBox_ItemCheck(object sender, ItemCheckEventArgs e)
         {
+            var selectedItem = (eTargetExtension)_checkedListBox.Items[e.Index];
+
             if (e.NewValue == CheckState.Checked)
             {
-                this.SelectedItems.Add(_checkedListBox.Items[e.Index]);
+                this.m_SelectedItems.Add(selectedItem);
             }
             else
             {
-                this.SelectedItems.Remove(_checkedListBox.Items[e.Index]);
+                this.m_SelectedItems.Remove(selectedItem);
             }
-
-            UpdateLabelText();
+            if (m_SelectedItems.Count > 0)
+            {
+                UpdateLabelText();
+            }
+            else
+            { 
+                this.Text = "All";
+                m_SelectedItems.Clear();
+            }
         }
 
         private void UpdateLabelText()
         {
-            if (this.SelectedItems.Count > 2)
+            if (this.m_SelectedItems.Count > 2)
             {
-                // Display only the first item followed by ",..."
-                this.Text = this.SelectedItems.FirstOrDefault()?.ToString() + ",...";
+                var firstItem = this.m_SelectedItems.FirstOrDefault();
+                this.Text = firstItem + ",...";
+            }
+            else if (this.m_SelectedItems.Count == 0)
+            {
+                this.Text = "All";
             }
             else
             {
-                // Display all selected items separated by ","
-                this.Text = string.Join(", ", this.SelectedItems);
+                this.Text = string.Join(", ", this.m_SelectedItems);
             }
         }
+
     }
 }

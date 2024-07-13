@@ -6,6 +6,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.Threading.Tasks;
 using System.Threading;
+using Org.BouncyCastle.Crypto;
 
 
 namespace FileKeywordSearcher
@@ -19,32 +20,6 @@ namespace FileKeywordSearcher
         private Label? txtProgressDetail = null!;
         private Label? txtProgressFileHasKeyWord = null!;
         private Label? txtProgressCurrentFile = null!;
-        public enum eFileExtension
-        {
-            Normal,
-            CSV,
-            Excel,
-            Excel_Old,
-            Word,
-            Word_Old,
-            Word_RTF,
-            PowerPoint,
-            PowerPoint_old,
-            PDF,
-            IgnoredExtension,
-        }
-
-        public enum eTargetExtension
-        {
-            Text,
-            Log,
-            CSV,
-            Excel,
-            Word,
-            PowerPoint,
-            PDF,
-            All,
-        }
 
         public Form1()
         {
@@ -149,7 +124,7 @@ namespace FileKeywordSearcher
                     return;
                 }
                 ControlsStatus(false);
-                fileKeywordSearcher = new FileKeywordSearcher(txtBrowser.Text, txtKeyWord.Text);
+                fileKeywordSearcher = new FileKeywordSearcher(txtBrowser.Text, txtKeyWord.Text, labelWithCheckBoxList.m_SelectedItems);
                 if (!fileKeywordSearcher.getTotalFiles())
                 {
                     return;
@@ -180,7 +155,7 @@ namespace FileKeywordSearcher
                 }
                 finally
                 {
-                    ControlsStatus(true); 
+                    ControlsStatus(true);
                     btnStartSearch.Text = "Search";
                 }
             }
@@ -379,7 +354,7 @@ namespace FileKeywordSearcher
             txtBrowser.Location = newLocation;
 
             tableLayoutPanel.Width = ClientRectangle.Width;
-            tableLayoutPanel.Height = ClientRectangle.Height - ( btnStartSearch.Height + 9);
+            tableLayoutPanel.Height = ClientRectangle.Height - (btnStartSearch.Height + 9);
 
             foreach (Control control in tableLayoutPanel.Controls)
             {
@@ -542,7 +517,7 @@ namespace FileKeywordSearcher
                 txtProgressFileHasKeyWord.Height = progressBar1.Height + 20;
 
                 txtProgressCurrentFile.Width = progressBar1.Width;
-                txtProgressCurrentFile.Height = progressBar1.Height + progressBar1.Height/2;
+                txtProgressCurrentFile.Height = progressBar1.Height + progressBar1.Height / 2;
 
             }
         }
@@ -645,10 +620,10 @@ namespace FileKeywordSearcher
 
         private void BringToForntControl()
         {
-           btnBrowser.BringToFront();
-           txtBrowser.BringToFront();
-           txtKeyWord.BringToFront();
-           btnBrowser.BringToFront();
+            btnBrowser.BringToFront();
+            txtBrowser.BringToFront();
+            txtKeyWord.BringToFront();
+            btnBrowser.BringToFront();
         }
     }
 }
