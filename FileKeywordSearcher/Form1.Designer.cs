@@ -130,7 +130,6 @@ namespace FileKeywordSearcher
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(238, 245, 255);
             ClientSize = new Size(800, 449);
-            MinimumSize = new Size(550, 300);
             Controls.Add(txtKeyWord);
             Controls.Add(btnStartSearch);
             Controls.Add(tableLayoutPanel);
@@ -138,6 +137,7 @@ namespace FileKeywordSearcher
             Controls.Add(btnBrowser);
             Controls.Add(labelWithCheckBoxList);
             Icon = (Icon)resources.GetObject("$this.Icon");
+            MinimumSize = new Size(550, 300);
             Name = "Form1";
             Text = "File Keyword Searcher";
             ResumeLayout(false);

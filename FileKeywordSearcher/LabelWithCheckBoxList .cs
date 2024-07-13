@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using static FileKeywordSearcher.Form1;
 
 namespace FileKeywordSearcher
 {
@@ -14,6 +13,9 @@ namespace FileKeywordSearcher
         private bool _isDroppedDown;
         private bool initCheck = false;
         public HashSet<eTargetExtension> m_SelectedItems { get; } = new HashSet<eTargetExtension>();
+
+        // Property to store the parent form
+        public Form ParentForm { get; private set; }
 
         public LabelWithCheckBoxList()
         {
@@ -33,9 +35,15 @@ namespace FileKeywordSearcher
             };
             _popupForm.Controls.Add(_checkedListBox);
             _popupForm.Deactivate += PopupForm_Deactivate;
-
             this.Click += LabelWithCheckBoxList_Click;
+
+            // Subscribe to parent form's Load event to initialize ParentForm property
+            this.ParentChanged += (sender, e) =>
+            {
+                ParentForm = this.FindForm();
+            };
         }
+
 
         private void PopupForm_Deactivate(object sender, EventArgs e)
         {
@@ -59,6 +67,15 @@ namespace FileKeywordSearcher
                     _checkedListBox.SetItemChecked(0, true); // Last item
                 }
             }
+
+            // Example: Accessing parent form's height
+            if (ParentForm != null)
+            {
+                int formHeight = ParentForm.Height;
+                // Now you can use 'formHeight' as needed
+                // For example:
+                Console.WriteLine($"Parent form height: {formHeight}");
+            }
         }
 
         private void ShowPopup()
@@ -79,6 +96,10 @@ namespace FileKeywordSearcher
                 _popupForm.MaximumSize = new Size(103, _checkedListBox.Height);
 
                 var point = this.PointToScreen(new Point(0, this.Height));
+                if (IsFullScreen() || IsInLowerHalfOfScreen())
+                {
+                    point = this.PointToScreen(new Point(0, -_popupForm.Height));
+                }
                 _popupForm.Location = point;
 
                 _popupForm.Show();
@@ -138,6 +159,29 @@ namespace FileKeywordSearcher
             {
                 this.Text = string.Join(", ", this.m_SelectedItems);
             }
+        }
+
+        public bool IsFullScreen()
+        {
+            if (ParentForm != null)
+            {
+                int screenHeight = Screen.PrimaryScreen.Bounds.Height;
+                return ParentForm.Height >= screenHeight - 100;
+            }
+            return false;
+        }
+        public bool IsInLowerHalfOfScreen()
+        {
+            if (ParentForm != null)
+            {
+                Rectangle screenRectangle = Screen.FromControl(ParentForm).Bounds;
+                int screenHeight = screenRectangle.Height;
+
+                int formBottom = ParentForm.Location.Y + ParentForm.Height/2;
+
+                return (formBottom >= screenHeight / 2);
+            }
+            return false;
         }
     }
 }
