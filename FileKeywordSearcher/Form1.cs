@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using System.Threading.Tasks;
 using System.Threading;
 using Org.BouncyCastle.Crypto;
+using Microsoft.WindowsAPICodePack.Taskbar;
 
 
 namespace FileKeywordSearcher
@@ -56,6 +57,8 @@ namespace FileKeywordSearcher
                 {
                     progressBar1.Value = e.percent;
                     progressBar1.Refresh(); // Ensure ProgressBar updates visually
+                    TaskbarManager.Instance.SetProgressValue(e.percent, 100);
+                    TaskbarManager.Instance.SetProgressState(TaskbarProgressBarState.Normal);
                 }
 
                 // Update progress text details
@@ -83,6 +86,7 @@ namespace FileKeywordSearcher
                 // Check if progress is complete (100%)
                 if (e.percent >= 100)
                 {
+                    TaskbarManager.Instance.SetProgressState(TaskbarProgressBarState.NoProgress);
                     // Schedule clearing ProgressBar after a short delay
                     System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
                     timer.Interval = 500;
