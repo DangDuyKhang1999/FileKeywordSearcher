@@ -140,7 +140,7 @@ namespace FileKeywordSearcher
                 foreach (var file in Directory.GetFiles(directoryPath))
                 {
                     eFileExtension fileExtension = GetFileExtension(file);
-                    if (CheckTagert(fileExtension))
+                    if (CheckTagert(fileExtension) && fileExtension != eFileExtension.IgnoredExtension)
                     {
                         FileItem fileItemCheck = new FileItem(file, "", fileExtension, false);
                         totalCount++;
@@ -178,6 +178,7 @@ namespace FileKeywordSearcher
             }
             return m_iTotalFileCount != 0;
         }
+
 
         private bool CheckFileForKeyword(string filePath, ref string strLineMapping, ref bool bHasMultiKeyWord)
         {
@@ -935,35 +936,101 @@ namespace FileKeywordSearcher
                 ".bin" => eFileExtension.IgnoredExtension, // Binary File
                 ".img" => eFileExtension.IgnoredExtension, // Disk Image File
                 ".iso" => eFileExtension.IgnoredExtension, // Optical Disc Image
+                ".sys" => eFileExtension.IgnoredExtension, // System File
+                ".dat" => eFileExtension.IgnoredExtension, // Data File
+                ".lib" => eFileExtension.IgnoredExtension, // Library File
+                ".pdb" => eFileExtension.IgnoredExtension, // Program Database
+                ".exp" => eFileExtension.IgnoredExtension, // Export File
+                ".asc" => eFileExtension.IgnoredExtension, // ASCII Text File
+                ".obj" => eFileExtension.IgnoredExtension, // Object File
+                ".xyz" => eFileExtension.IgnoredExtension, // XYZ File
+                ".dmp" => eFileExtension.IgnoredExtension, // Dump File
+                ".apk" => eFileExtension.IgnoredExtension, // Android Package File
+                ".bat" => eFileExtension.IgnoredExtension, // Batch File
+                ".com" => eFileExtension.IgnoredExtension, // Command File
+                ".drv" => eFileExtension.IgnoredExtension, // Device Driver
+                ".vxd" => eFileExtension.IgnoredExtension, // Virtual Device Driver
+                ".msi" => eFileExtension.IgnoredExtension, // Windows Installer Package
+                ".scr" => eFileExtension.IgnoredExtension, // Screensaver File
+                ".tmp" => eFileExtension.IgnoredExtension, // Temporary File
+
+                // Image ----------->
                 ".jpg" => eFileExtension.IgnoredExtension, // JPEG Image
                 ".jpeg" => eFileExtension.IgnoredExtension, // JPEG Image 
                 ".png" => eFileExtension.IgnoredExtension, // Portable Network Graphics
+                ".ico" => eFileExtension.IgnoredExtension, // Icon file
                 ".gif" => eFileExtension.IgnoredExtension, // Graphics Interchange Format
                 ".bmp" => eFileExtension.IgnoredExtension, // Bitmap Image
                 ".tiff" => eFileExtension.IgnoredExtension, // Tagged Image File Format
+                ".tif" => eFileExtension.IgnoredExtension, // Tagged Image File Format
+                ".webp" => eFileExtension.IgnoredExtension, // WebP Image
+                ".svg" => eFileExtension.IgnoredExtension, // Scalable Vector Graphics
+                ".heic" => eFileExtension.IgnoredExtension, // High Efficiency Image Format
+                ".heif" => eFileExtension.IgnoredExtension, // High Efficiency Image Format
+                ".raw" => eFileExtension.IgnoredExtension, // Raw Image File (generic)
+                ".cr2" => eFileExtension.IgnoredExtension, // Canon Raw Image File
+                ".nef" => eFileExtension.IgnoredExtension, // Nikon Raw Image File
+                ".orf" => eFileExtension.IgnoredExtension, // Olympus Raw Image File
+                ".sr2" => eFileExtension.IgnoredExtension, // Sony Raw Image File
+                //<----------- Image
+
+                // Audio ----------->
                 ".mp3" => eFileExtension.IgnoredExtension, // MPEG Audio Layer III
                 ".wav" => eFileExtension.IgnoredExtension, // Waveform Audio File Format
                 ".flac" => eFileExtension.IgnoredExtension, // Free Lossless Audio Codec
                 ".aac" => eFileExtension.IgnoredExtension, // Advanced Audio Codec
                 ".ogg" => eFileExtension.IgnoredExtension, // Ogg Vorbis
+                ".wma" => eFileExtension.IgnoredExtension, // Windows Media Audio
+                ".aiff" => eFileExtension.IgnoredExtension, // Audio Interchange File Format
+                ".pcm" => eFileExtension.IgnoredExtension, // Pulse-Code Modulation
+                ".aif" => eFileExtension.IgnoredExtension, // Audio Interchange File Format
+                ".mid" => eFileExtension.IgnoredExtension, // MIDI File
+                ".midi" => eFileExtension.IgnoredExtension, // MIDI File
+                ".m4a" => eFileExtension.IgnoredExtension, // MPEG-4 Audio
+                //<----------- Audio
+
+                // Video ----------->
                 ".mp4" => eFileExtension.IgnoredExtension, // MPEG-4 Video
                 ".mkv" => eFileExtension.IgnoredExtension, // Matroska Video
                 ".avi" => eFileExtension.IgnoredExtension, // Audio Video Interleave
                 ".mov" => eFileExtension.IgnoredExtension, // QuickTime Movie
                 ".wmv" => eFileExtension.IgnoredExtension, // Windows Media Video
+                ".flv" => eFileExtension.IgnoredExtension, // Flash Video
+                ".webm" => eFileExtension.IgnoredExtension, // WebM Video
+                ".mpg" => eFileExtension.IgnoredExtension, // MPEG Video
+                ".mpeg" => eFileExtension.IgnoredExtension, // MPEG Video
+                ".3gp" => eFileExtension.IgnoredExtension, // 3GPP Multimedia File
+                ".m4v" => eFileExtension.IgnoredExtension, // MPEG-4 Video
+                //<----------- Video
+
+                // Archive ----------->
                 ".zip" => eFileExtension.IgnoredExtension, // ZIP Archive
                 ".rar" => eFileExtension.IgnoredExtension, // RAR Archive
                 ".7z" => eFileExtension.IgnoredExtension, // 7-Zip Archive
                 ".tar.gz" => eFileExtension.IgnoredExtension, // Compressed Archive File
+                ".tar" => eFileExtension.IgnoredExtension, // Consolidated Unix File Archive
+                ".gz" => eFileExtension.IgnoredExtension, // Gnu Zipped Archive
+                ".bz2" => eFileExtension.IgnoredExtension, // Bzip2 Compressed Archive
+                ".xz" => eFileExtension.IgnoredExtension, // XZ Compressed Archive
+                ".pkg" => eFileExtension.IgnoredExtension, // Package File
+                ".deb" => eFileExtension.IgnoredExtension, // Debian Software Package
+                ".rpm" => eFileExtension.IgnoredExtension, // Red Hat Package Manager
+                ".dmg" => eFileExtension.IgnoredExtension, // Apple Disk Image
+                 //<----------- Archive
+
+                // Database ----------->
                 ".db" => eFileExtension.IgnoredExtension, // Database File
                 ".mdb" => eFileExtension.IgnoredExtension, // Microsoft Access Database
                 ".sqlite" => eFileExtension.IgnoredExtension, // SQLite Database
+                ".sql" => eFileExtension.IgnoredExtension, // Structured Query Language Data
+                ".accdb" => eFileExtension.IgnoredExtension, // Access Database
+                ".dbf" => eFileExtension.IgnoredExtension, // Database File
+                //<----------- Database
+
+                // Document ----------->
                 ".psd" => eFileExtension.IgnoredExtension, // Adobe Photoshop Document
                 ".ai" => eFileExtension.IgnoredExtension, // Adobe Illustrator Document
                 ".dwg" => eFileExtension.IgnoredExtension, // AutoCAD Drawing
-                ".sys" => eFileExtension.IgnoredExtension, // System File
-                ".dat" => eFileExtension.IgnoredExtension, // Data File
-                ".wma" => eFileExtension.IgnoredExtension, // Windows Media Audio
                 ".ps" => eFileExtension.IgnoredExtension, // PostScript File
                 ".key" => eFileExtension.IgnoredExtension, // Keynote Presentation
                 ".odt" => eFileExtension.IgnoredExtension, // OpenDocument Text Document
@@ -972,14 +1039,14 @@ namespace FileKeywordSearcher
                 ".dwf" => eFileExtension.IgnoredExtension, // Design Web Format
                 ".jar" => eFileExtension.IgnoredExtension, // Java Archive
                 ".enc" => eFileExtension.IgnoredExtension, // Encoded File
-                ".lib" => eFileExtension.IgnoredExtension, // Library File
-                ".pdb" => eFileExtension.IgnoredExtension, // Program Database
-                ".exp" => eFileExtension.IgnoredExtension, // Export File
-                ".asc" => eFileExtension.IgnoredExtension, // ASCII Text File
-                ".obj" => eFileExtension.IgnoredExtension, // Object File
-                ".xyz" => eFileExtension.IgnoredExtension, // XYZ File
-                ".dmp" => eFileExtension.IgnoredExtension, // Dump File
-                // ----------->
+                ".epub" => eFileExtension.IgnoredExtension, // Electronic Publication
+                ".mobi" => eFileExtension.IgnoredExtension, // Mobipocket eBook
+                ".tex" => eFileExtension.IgnoredExtension, // LaTeX Source Document
+                ".wpd" => eFileExtension.IgnoredExtension, // WordPerfect Document
+                ".xps" => eFileExtension.IgnoredExtension, // XML Paper Specification
+                //<----------- Document
+                //<----------- Ignored Extension
+
                 _ => eFileExtension.Normal
             };
         }

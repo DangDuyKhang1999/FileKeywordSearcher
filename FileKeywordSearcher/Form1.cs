@@ -125,12 +125,13 @@ namespace FileKeywordSearcher
                     btnBrowser.Focus();
                     return;
                 }
-                ControlsStatus(false);
                 fileKeywordSearcher = new FileKeywordSearcher(txtBrowser.Text, txtKeyWord.Text, labelWithCheckBoxList.m_SelectedItems);
                 if (!fileKeywordSearcher.getTotalFiles())
                 {
+                    InitializeTableLayoutResult();
                     return;
                 }
+                ControlsStatus(false);
                 if (progressBar1 == null)
                 {
                     tableLayoutPanel.Controls.Clear();
