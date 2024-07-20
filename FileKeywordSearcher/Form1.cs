@@ -125,6 +125,14 @@ namespace FileKeywordSearcher
                     btnBrowser.Focus();
                     return;
                 }
+
+                if (string.IsNullOrEmpty(txtKeyWord.Text))
+                {
+                    MessageBox.Show("Please enter the keyword for the search!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    txtKeyWord.Focus();
+                    return;
+                }
+
                 fileKeywordSearcher = new FileKeywordSearcher(txtBrowser.Text, txtKeyWord.Text, labelWithCheckBoxList.m_SelectedItems);
                 if (!fileKeywordSearcher.getTotalFiles())
                 {

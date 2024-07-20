@@ -921,6 +921,7 @@ namespace FileKeywordSearcher
                 ".csv" => eFileExtension.CSV, // Comma-Separated Values
                 ".xls" => eFileExtension.Excel_Old, // Microsoft Excel Spreadsheet (Legacy)
                 ".xlsx" => eFileExtension.Excel, // Microsoft Excel Spreadsheet
+                ".xlsm" => eFileExtension.Excel, // Microsoft Excel Spreadsheet with macros
                 ".doc" => eFileExtension.Word_Old, // Microsoft Word document  (Legacy)
                 ".docx" => eFileExtension.Word, // Microsoft Word document
                 ".docm" => eFileExtension.Word, // Microsoft Word document with macros
@@ -1058,9 +1059,6 @@ namespace FileKeywordSearcher
                 switch (item)
                 {
                     case eTargetExtension.PlainText:
-                        m_ListsTargerExcute.Add(eFileExtension.Normal);
-                        break;
-                    case eTargetExtension.Log:
                         m_ListsTargerExcute.Add(eFileExtension.Normal);
                         break;
                     case eTargetExtension.CSV:

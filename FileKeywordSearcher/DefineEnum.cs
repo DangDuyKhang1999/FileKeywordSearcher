@@ -30,7 +30,6 @@ namespace FileKeywordSearcher
     public enum eTargetExtension
     {
         PlainText,  // Plain text file format (e.g., .txt, .asc, .log, .csv)
-        Log,        // Log file format (e.g., .log)
         CSV,        // Comma-separated values file format (e.g., .csv)
         Excel,      // Microsoft Excel file format (e.g., .xls, .xlsx)
         Word,       // Microsoft Word file format (e.g., .doc, .docx)
