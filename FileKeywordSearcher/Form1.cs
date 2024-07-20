@@ -112,9 +112,9 @@ namespace FileKeywordSearcher
         {
             if (btnStartSearch.Text == "Search")
             {
-                if (String.IsNullOrEmpty(txtBrowser.Text))
+                if (txtBrowser.Text == "Please select the directory for searching!!!")
                 {
-                    MessageBox.Show("Please select the directory for inspection!!!", "Error!!!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Please select the directory for searching!!!", "Error!!!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     btnBrowser.Focus();
                     return;
                 }
@@ -126,9 +126,9 @@ namespace FileKeywordSearcher
                     return;
                 }
 
-                if (string.IsNullOrEmpty(txtKeyWord.Text))
+                if (txtKeyWord.Text == "Enter the search keyword!!!")
                 {
-                    MessageBox.Show("Please enter the keyword for the search!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Please enter the keyword for the search!!!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     txtKeyWord.Focus();
                     return;
                 }
@@ -400,14 +400,14 @@ namespace FileKeywordSearcher
         {
             if (txtBrowser.Text == String.Empty)
             {
-                txtBrowser.Text = "Please select the directory for inspection!!!";
+                txtBrowser.Text = "Please select the directory for searching!!!";
                 txtBrowser.ForeColor = Color.Red;
             }
         }
 
         private void txtBrowser_Enter(object sender, EventArgs e)
         {
-            if (txtBrowser.Text == "Please select the directory for inspection!!!")
+            if (txtBrowser.Text == "Please select the directory for searching!!!")
             {
                 txtBrowser.Text = String.Empty;
                 txtBrowser.ForeColor = Color.Black;

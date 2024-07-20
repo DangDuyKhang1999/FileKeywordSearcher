@@ -66,7 +66,7 @@ namespace FileKeywordSearcher
             txtBrowser.Name = "txtBrowser";
             txtBrowser.Size = new Size(584, 29);
             txtBrowser.TabIndex = 4;
-            txtBrowser.Text = "Please select the directory for inspection!!!";
+            txtBrowser.Text = "Please select the directory for searching!!!";
             txtBrowser.Enter += txtBrowser_Enter;
             txtBrowser.Leave += txtBrowser_Leave;
             // 

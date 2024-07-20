@@ -954,6 +954,8 @@ namespace FileKeywordSearcher
                 ".msi" => eFileExtension.IgnoredExtension, // Windows Installer Package
                 ".scr" => eFileExtension.IgnoredExtension, // Screensaver File
                 ".tmp" => eFileExtension.IgnoredExtension, // Temporary File
+                ".asta" => eFileExtension.IgnoredExtension, // ASTA Project File
+                ".bak" => eFileExtension.IgnoredExtension, // Backup File
 
                 // Image ----------->
                 ".jpg" => eFileExtension.IgnoredExtension, // JPEG Image
