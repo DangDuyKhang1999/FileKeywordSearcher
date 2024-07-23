@@ -156,7 +156,6 @@ namespace FileKeywordSearcher
                 UpdateProgressBarPosition();
                 UpdateProgressBarFont();
 
-                // Khởi tạo CancellationTokenSource
                 cancellationTokenSource = new CancellationTokenSource();
 
                 try
@@ -172,6 +171,7 @@ namespace FileKeywordSearcher
             }
             else
             {
+                TaskbarManager.Instance.SetProgressState(TaskbarProgressBarState.NoProgress);
                 ClearProgressBar();
                 cancellationTokenSource.Cancel();
                 btnStartSearch.Text = "Search";

@@ -349,94 +349,104 @@ namespace FileKeywordSearcher
                     }
                     foreach (Sheet sheet in workbookPart.Workbook.Sheets)
                     {
-                        if (sheet == null || workbookPart == null)
+                        try
                         {
-                            return false; // Exit early if document or workbook part is null
-                        }
-                        WorksheetPart worksheetPart = (WorksheetPart)workbookPart.GetPartById(sheet.Id);
-                        string sheetName = sheet.Name;
-
-                        // Initialize the list of cells containing keyword in the current worksheet
-                        if (!keywordCells.ContainsKey(sheetName))
-                        {
-                            keywordCells[sheetName] = new List<string>();
-                        }
-
-                        // Initialize the list of shapes in the current worksheet
-                        if (!sheetShapes.ContainsKey(sheetName))
-                        {
-                            sheetShapes[sheetName] = new List<string>();
-                        }
-
-                        // Check keyword in cells
-                        if (worksheetPart == null || worksheetPart.Worksheet == null)
-                        {
-                            return false; // Exit early if document or workbook part is null
-                        }
-                        SheetData sheetData = worksheetPart.Worksheet.Elements<SheetData>().FirstOrDefault();
-                        if (sheetData != null)
-                        {
-                            foreach (Row row in sheetData.Elements<Row>())
+                            if (sheet == null || workbookPart == null)
                             {
-                                foreach (Cell cell in row.Elements<Cell>())
-                                {
-                                    if (cell != null && cell.CellReference != null)
-                                    {
-                                        // Get cell value, checking for null
-                                        string cellValue = GetCellValue(document, cell);
-                                        if (cellValue == null)
-                                        {
-                                            continue; // Skip null cell values
-                                        }
+                                return false; // Exit early if document or workbook part is null
+                            }
+                            WorksheetPart worksheetPart = (WorksheetPart)workbookPart.GetPartById(sheet.Id);
+                            string sheetName = sheet.Name;
 
-                                        // Check if the cell contains the keyword (case insensitive)
-                                        if (cellValue.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                            // Initialize the list of cells containing keyword in the current worksheet
+                            if (!keywordCells.ContainsKey(sheetName))
+                            {
+                                keywordCells[sheetName] = new List<string>();
+                            }
+
+                            // Initialize the list of shapes in the current worksheet
+                            if (!sheetShapes.ContainsKey(sheetName))
+                            {
+                                sheetShapes[sheetName] = new List<string>();
+                            }
+
+                            // Check keyword in cells
+                            if (worksheetPart == null || worksheetPart.Worksheet == null)
+                            {
+                                return false; // Exit early if document or workbook part is null
+                            }
+                            SheetData sheetData = worksheetPart.Worksheet.Elements<SheetData>().FirstOrDefault();
+                            if (sheetData != null)
+                            {
+                                foreach (Row row in sheetData.Elements<Row>())
+                                {
+                                    foreach (Cell cell in row.Elements<Cell>())
+                                    {
+                                        if (cell != null && cell.CellReference != null)
                                         {
-                                            string cellAddress = cell.CellReference.ToString();
-                                            if (cellAddress != null)
+                                            // Get cell value, checking for null
+                                            string cellValue = GetCellValue(document, cell);
+                                            if (cellValue == null)
                                             {
-                                                if (!keywordCells[sheetName].Contains(cellAddress))
+                                                continue; // Skip null cell values
+                                            }
+
+                                            // Check if the cell contains the keyword (case insensitive)
+                                            if (cellValue.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                                            {
+                                                string cellAddress = cell.CellReference.ToString();
+                                                if (cellAddress != null)
                                                 {
-                                                    keywordCells[sheetName].Add(cellAddress);
-                                                    bHasKeyWord = true;
+                                                    if (!keywordCells[sheetName].Contains(cellAddress))
+                                                    {
+                                                        keywordCells[sheetName].Add(cellAddress);
+                                                        bHasKeyWord = true;
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
 
-                        // Check shapes in worksheet
-                        if (worksheetPart.DrawingsPart != null)
-                        {
-                            var drawingsPart = worksheetPart.DrawingsPart;
-                            var shapeElements = drawingsPart.WorksheetDrawing.Elements<TwoCellAnchor>();
-
-                            foreach (var element in shapeElements)
+                            // Check shapes in worksheet
+                            if (worksheetPart.DrawingsPart != null)
                             {
-                                // Get the text content of the shape
-                                var shapeText = element.Descendants<DocumentFormat.OpenXml.Drawing.Text>().Select(t => t.Text).Aggregate(string.Empty, (current, text) => current + text);
+                                var drawingsPart = worksheetPart.DrawingsPart;
+                                var shapeElements = drawingsPart.WorksheetDrawing.Elements<TwoCellAnchor>();
 
-                                // Get the start position of the shape
-                                var fromMarker = element.FromMarker;
-                                if (fromMarker != null && fromMarker.RowId != null && fromMarker.ColumnId != null)
+                                foreach (var element in shapeElements)
                                 {
-                                    int fromRow = int.Parse(fromMarker.RowId.Text); // Row index (0-based)
-                                    int fromColumn = int.Parse(fromMarker.ColumnId.Text); // Column index (0-based)
-                                    string shapePosition = $"{GetExcelColumnName(fromColumn + 1)}{fromRow + 1}"; // Convert to 1-based
-
-                                    // Check if the shape text contains the keyword (case insensitive)
-                                    if (shapeText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                                    try
                                     {
-                                        if (sheetShapes.ContainsKey(sheetName) && !sheetShapes[sheetName].Contains(shapePosition))
+                                        // Get the text content of the shape
+                                        var shapeText = element.Descendants<DocumentFormat.OpenXml.Drawing.Text>().Select(t => t.Text).Aggregate(string.Empty, (current, text) => current + text);
+
+                                        // Get the start position of the shape
+                                        var fromMarker = element.FromMarker;
+                                        if (fromMarker != null && fromMarker.RowId != null && fromMarker.ColumnId != null)
                                         {
-                                            sheetShapes[sheetName].Add(shapePosition);
-                                            bHasKeyWord = true;
+                                            int fromRow = int.Parse(fromMarker.RowId.Text); // Row index (0-based)
+                                            int fromColumn = int.Parse(fromMarker.ColumnId.Text); // Column index (0-based)
+                                            string shapePosition = $"{GetExcelColumnName(fromColumn + 1)}{fromRow + 1}"; // Convert to 1-based
+
+                                            // Check if the shape text contains the keyword (case insensitive)
+                                            if (shapeText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                                            {
+                                                if (sheetShapes.ContainsKey(sheetName) && !sheetShapes[sheetName].Contains(shapePosition))
+                                                {
+                                                    sheetShapes[sheetName].Add(shapePosition);
+                                                    bHasKeyWord = true;
+                                                }
+                                            }
                                         }
-                                    }
+                                    } catch { }
                                 }
                             }
+                        }
+                        catch
+                        {
+                        
                         }
                     }
                 }
@@ -541,25 +551,32 @@ namespace FileKeywordSearcher
                     HSSFPatriarch drawingPatriarch = sheet.DrawingPatriarch as HSSFPatriarch;
                     if (drawingPatriarch != null)
                     {
-                        foreach (HSSFShape shape in drawingPatriarch.Children)
+                        try
                         {
-                            if (shape is HSSFSimpleShape simpleShape && simpleShape.String != null)
+                            foreach (HSSFShape shape in drawingPatriarch.Children)
                             {
-                                string shapeText = simpleShape.String.String;
-                                if (shapeText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                                if (shape is HSSFSimpleShape simpleShape && simpleShape.String != null)
                                 {
-                                    HSSFClientAnchor anchor = shape.Anchor as HSSFClientAnchor;
-                                    if (anchor != null)
+                                    string shapeText = simpleShape.String.String;
+                                    if (shapeText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
                                     {
-                                        string shapePosition = $"{GetExcelColumnName(anchor.Col1 + 1)}{anchor.Row1 + 1}";
-                                        if (!sheetShapes[sheetName].Contains(shapePosition))
+                                        HSSFClientAnchor anchor = shape.Anchor as HSSFClientAnchor;
+                                        if (anchor != null)
                                         {
-                                            sheetShapes[sheetName].Add(shapePosition);
-                                            bHasKeyWord = true;
+                                            string shapePosition = $"{GetExcelColumnName(anchor.Col1 + 1)}{anchor.Row1 + 1}";
+                                            if (!sheetShapes[sheetName].Contains(shapePosition))
+                                            {
+                                                sheetShapes[sheetName].Add(shapePosition);
+                                                bHasKeyWord = true;
+                                            }
                                         }
                                     }
                                 }
                             }
+                        }
+                        catch
+                        {
+                            // next shape
                         }
                     }
                 }
@@ -622,15 +639,19 @@ namespace FileKeywordSearcher
                     // Iterate through each page in the PDF fileItem
                     for (int i = 1; i <= reader.NumberOfPages; i++)
                     {
-                        string text = PdfTextExtractor.GetTextFromPage(reader, i);
-
-                        // Search for the keyword in the text (case insensitive)
-                        if (text.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                        try
                         {
-                            // Save the page number if the keyword is found
-                            pagesWithKeyword.Add(i);
-                            bHasKeyword = true;
+                            string text = PdfTextExtractor.GetTextFromPage(reader, i);
+
+                            // Search for the keyword in the text (case insensitive)
+                            if (text.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                // Save the page number if the keyword is found
+                                pagesWithKeyword.Add(i);
+                                bHasKeyword = true;
+                            }
                         }
+                        catch { }
                     }
                 }
             }
@@ -744,7 +765,7 @@ namespace FileKeywordSearcher
 
                 return bHasKeyWord;
             }
-            catch (Exception)
+            catch
             {
                 // Handle exceptions such as fileItem not found, access denied, etc.
                 //MessageBox.Show($"Error reading fileItem {filePath}: {ex.Message}");
@@ -775,50 +796,62 @@ namespace FileKeywordSearcher
                     // Iterate through slides
                     foreach (SlideId slideId in presentation.SlideIdList.Elements<SlideId>())
                     {
-                        SlidePart slidePart = (SlidePart)presentationPart.GetPartById(slideId.RelationshipId);
-
-                        // Check for keyword in slide text
-                        foreach (DocumentFormat.OpenXml.Presentation.Shape shape in slidePart.Slide.Descendants<DocumentFormat.OpenXml.Presentation.Shape>())
+                        try
                         {
-                            if (shape.TextBody != null)
-                            {
-                                string shapeText = shape.TextBody.InnerText;
 
-                                // Check if the shape contains the keyword (case insensitive)
-                                if (shapeText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                            SlidePart slidePart = (SlidePart)presentationPart.GetPartById(slideId.RelationshipId);
+
+                            // Check for keyword in slide text
+                            foreach (DocumentFormat.OpenXml.Presentation.Shape shape in slidePart.Slide.Descendants<DocumentFormat.OpenXml.Presentation.Shape>())
+                            {
+                                try
                                 {
-                                    hasKeyword = true;
-                                    break; // Exit loop early if keyword is found
+                                    if (shape.TextBody != null)
+                                    {
+                                        string shapeText = shape.TextBody.InnerText;
+
+                                        // Check if the shape contains the keyword (case insensitive)
+                                        if (shapeText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                                        {
+                                            hasKeyword = true;
+                                            break; // Exit loop early if keyword is found
+                                        }
+                                    }
                                 }
+                                catch { }
                             }
-                        }
 
-                        if (hasKeyword)
-                        {
-                            break; // Exit outer loop if keyword is found
-                        }
-
-                        // Check for shapes in slide drawings
-                        foreach (var graphicFrame in slidePart.Slide.Descendants<DocumentFormat.OpenXml.Presentation.GraphicFrame>())
-                        {
-                            var drawingTexts = graphicFrame.Descendants<DocumentFormat.OpenXml.Drawing.Text>().Select(t => t.Text);
-                            string drawingText = string.Join("", drawingTexts);
-
-                            if (drawingText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                            if (hasKeyword)
                             {
-                                hasKeyword = true;
-                                break; // Exit loop early if keyword is found
+                                break; // Exit outer loop if keyword is found
+                            }
+
+                            // Check for shapes in slide drawings
+                            foreach (var graphicFrame in slidePart.Slide.Descendants<DocumentFormat.OpenXml.Presentation.GraphicFrame>())
+                            {
+                                try
+                                {
+                                    var drawingTexts = graphicFrame.Descendants<DocumentFormat.OpenXml.Drawing.Text>().Select(t => t.Text);
+                                    string drawingText = string.Join("", drawingTexts);
+
+                                    if (drawingText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                                    {
+                                        hasKeyword = true;
+                                        break; // Exit loop early if keyword is found
+                                    }
+                                } catch { }
+                            }
+
+                            if (hasKeyword)
+                            {
+                                break; // Exit outer loop if keyword is found
                             }
                         }
-
-                        if (hasKeyword)
-                        {
-                            break; // Exit outer loop if keyword is found
-                        }
+                        catch { }
                     }
                 }
             }
-            catch (Exception)
+            catch
             {
                 // Handle exceptions such as fileItem not found, access denied, etc.
                 //MessageBox.Show($"Error reading fileItem {filePath}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -845,55 +878,70 @@ namespace FileKeywordSearcher
                 // Iterate through slides
                 foreach (PowerPoint.Slide slide in presentation.Slides)
                 {
-                    // Check for keyword in slide text
-                    foreach (PowerPoint.Shape shape in slide.Shapes)
+                    try
                     {
-                        if (shape.HasTextFrame == MsoTriState.msoTrue && shape.TextFrame.HasText == MsoTriState.msoTrue)
+                        // Check for keyword in slide text
+                        foreach (PowerPoint.Shape shape in slide.Shapes)
                         {
-                            string shapeText = shape.TextFrame.TextRange.Text;
-
-                            // Check if the shape contains the keyword (case insensitive)
-                            if (shapeText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                            try
                             {
-                                hasKeyword = true;
-                                break; // Exit loop early if keyword is found
-                            }
-                        }
-                    }
-
-                    if (hasKeyword)
-                    {
-                        break; // Exit outer loop if keyword is found
-                    }
-
-                    // Check for shapes in slide drawings
-                    foreach (PowerPoint.Shape shape in slide.Shapes)
-                    {
-                        if (shape.Type == Office.MsoShapeType.msoGroup)
-                        {
-                            foreach (PowerPoint.Shape subShape in shape.GroupItems)
-                            {
-                                if (subShape.HasTextFrame == MsoTriState.msoTrue && subShape.TextFrame.HasText == MsoTriState.msoTrue)
+                                if (shape.HasTextFrame == MsoTriState.msoTrue && shape.TextFrame.HasText == MsoTriState.msoTrue)
                                 {
-                                    string subShapeText = subShape.TextFrame.TextRange.Text;
+                                    string shapeText = shape.TextFrame.TextRange.Text;
 
-                                    if (subShapeText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                                    // Check if the shape contains the keyword (case insensitive)
+                                    if (shapeText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
                                     {
                                         hasKeyword = true;
                                         break; // Exit loop early if keyword is found
                                     }
                                 }
                             }
+                            catch { }
                         }
 
                         if (hasKeyword)
                         {
                             break; // Exit outer loop if keyword is found
                         }
-                    }
+
+                        // Check for shapes in slide drawings
+                        foreach (PowerPoint.Shape shape in slide.Shapes)
+                        {
+                            try
+                            {
+                                if (shape.Type == Office.MsoShapeType.msoGroup)
+                                {
+                                    try
+                                    {
+                                        foreach (PowerPoint.Shape subShape in shape.GroupItems)
+                                        {
+                                            if (subShape.HasTextFrame == MsoTriState.msoTrue && subShape.TextFrame.HasText == MsoTriState.msoTrue)
+                                            {
+                                                string subShapeText = subShape.TextFrame.TextRange.Text;
+
+                                                if (subShapeText.IndexOf(m_strKeyWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                                                {
+                                                    hasKeyword = true;
+                                                    break; // Exit loop early if keyword is found
+                                                }
+                                            }
+                                        }
+                                    }
+                                    catch { }
+                                }
+
+                                if (hasKeyword)
+                                {
+                                    break; // Exit outer loop if keyword is found
+                                }
+                            }
+                            catch { }
+                        }
+                    } catch { }
                 }
             }
-            catch (Exception)
+            catch
             {
                 // Handle exceptions such as fileItem not found, access denied, etc.
                 // string errorMessage = $"Error reading .ppt fileItem {filePath}: {ex.Message}. The machine is unable to read the PowerPoint .ppt fileItem. This might be due to PowerPoint not being installed on the machine.";
