@@ -123,7 +123,7 @@ namespace FileKeywordSearcher
                     OnProgressChanged(percentComplete, fileItem.m_strFileName);
                 }
             }
-            catch (Exception)
+            catch
             {
                 // Handle other exceptions
             }
@@ -158,7 +158,7 @@ namespace FileKeywordSearcher
                     }
                 }
             }
-            catch (Exception)
+            catch
             {
                 // Handle other exceptions if needed
             }
@@ -173,7 +173,7 @@ namespace FileKeywordSearcher
             {
                 m_iTotalFileCount = CountFiles(m_strBrowser);
             }
-            catch (Exception)
+            catch
             {
             }
             return m_iTotalFileCount != 0;
@@ -202,7 +202,7 @@ namespace FileKeywordSearcher
                     }
                 }
             }
-            catch (Exception)
+            catch
             {
                 // Handle exceptions such as fileItem not found, access denied, etc.
                 //MessageBox.Show($"Error reading fileItem {filePath}: {ex.Message}");
@@ -256,7 +256,7 @@ namespace FileKeywordSearcher
                     }
                 }
             }
-            catch (Exception)
+            catch
             {
                 // Handle exceptions such as fileItem not found, access denied, etc.
                 //MessageBox.Show($"Error reading fileItem {filePath}: {ex.Message}");
@@ -482,7 +482,7 @@ namespace FileKeywordSearcher
                 // Update strMapping with the combined mappings
                 strMapping = string.Join("; ", resultMappings);
             }
-            catch (Exception)
+            catch
             {
                 // Handle exceptions such as fileItem not found, access denied, etc.
                 //MessageBox.Show($"Error reading fileItem {filePath}: {ex.Message}");
@@ -616,7 +616,7 @@ namespace FileKeywordSearcher
                 // Update strMapping with combined results
                 strMapping = string.Join("; ", resultMappings);
             }
-            catch (Exception)
+            catch 
             {
                 // Handle exceptions such as fileItem not found, access denied, etc.
                 //MessageBox.Show($"Error reading fileItem {filePath}: {ex.Message}");
@@ -655,7 +655,7 @@ namespace FileKeywordSearcher
                     }
                 }
             }
-            catch (Exception)
+            catch
             {
                 // Handle exceptions such as fileItem not found, access denied, etc.
                 //MessageBox.Show($"Error reading fileItem {filePath}: {ex.Message}");
@@ -736,7 +736,7 @@ namespace FileKeywordSearcher
                     }
                 }
             }
-            catch (Exception)
+            catch
             {
                 // Handle exceptions such as fileItem not found, access denied, etc.
                 //MessageBox.Show($"Error reading fileItem {filePath}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
