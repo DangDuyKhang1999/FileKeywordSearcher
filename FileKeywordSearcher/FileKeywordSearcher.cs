@@ -60,6 +60,9 @@ namespace FileKeywordSearcher
             {
                 foreach (var fileItem in m_totalFilePath)
                 {
+                    m_iFileCount++;
+                    int percentComplete = (int)((double)m_iFileCount / m_totalFilePath.Count * 100);
+                    OnProgressChanged(percentComplete, fileItem.m_strFileName);
                     if (cancellationToken.IsCancellationRequested)
                     {
                         return;
@@ -118,9 +121,6 @@ namespace FileKeywordSearcher
                         fileItem.m_bHasMultiKeyWord = bHasMultiKeyWord;
                         m_fileItems.Add(fileItem);
                     }
-                    m_iFileCount++;
-                    int percentComplete = (int)((double)m_iFileCount / m_totalFilePath.Count * 100);
-                    OnProgressChanged(percentComplete, fileItem.m_strFileName);
                 }
             }
             catch
