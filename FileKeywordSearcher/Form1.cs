@@ -6,6 +6,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Runtime.InteropServices;
 using Org.BouncyCastle.Crypto;
 using Microsoft.WindowsAPICodePack.Taskbar;
 
@@ -26,10 +27,17 @@ namespace FileKeywordSearcher
         private int _resultPage;
         private bool _isSearchRunning;
         private bool _stopRequested;
+        private const int DwmwaBorderColor = 34;
+        private const int DwmwaCaptionColor = 35;
+        private const int DwmwaTextColor = 36;
+
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int valueSize);
 
         public Form1()
         {
             InitializeComponent();
+            HandleCreated += (_, _) => ApplyPastelTitleBar(this);
             cancellationTokenSource = new CancellationTokenSource();
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             StartPosition = FormStartPosition.CenterScreen;
@@ -533,6 +541,7 @@ namespace FileKeywordSearcher
                 Font = new Font("Segoe UI", 9F),
                 ShowIcon = false
             };
+            dialog.HandleCreated += (_, _) => ApplyPastelTitleBar(dialog);
             Label heading = new()
             {
                 Dock = DockStyle.Top,
@@ -580,6 +589,27 @@ namespace FileKeywordSearcher
             dialog.AcceptButton = close;
             dialog.CancelButton = close;
             dialog.ShowDialog(this);
+        }
+
+        private static void ApplyPastelTitleBar(Form form)
+        {
+            if (!OperatingSystem.IsWindows()) return;
+            try
+            {
+                int captionColor = ToColorRef(Color.FromArgb(224, 240, 228));
+                int borderColor = ToColorRef(Color.FromArgb(190, 216, 198));
+                int textColor = ToColorRef(Color.FromArgb(43, 74, 55));
+                DwmSetWindowAttribute(form.Handle, DwmwaCaptionColor, ref captionColor, sizeof(int));
+                DwmSetWindowAttribute(form.Handle, DwmwaBorderColor, ref borderColor, sizeof(int));
+                DwmSetWindowAttribute(form.Handle, DwmwaTextColor, ref textColor, sizeof(int));
+            }
+            catch (DllNotFoundException) { }
+            catch (EntryPointNotFoundException) { }
+        }
+
+        private static int ToColorRef(Color color)
+        {
+            return color.R | (color.G << 8) | (color.B << 16);
         }
 
 
