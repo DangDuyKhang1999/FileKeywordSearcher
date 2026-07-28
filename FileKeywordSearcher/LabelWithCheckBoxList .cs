@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using System.Drawing.Drawing2D;
 
 namespace FileKeywordSearcher
 {
@@ -47,6 +48,24 @@ namespace FileKeywordSearcher
             {
                 ParentForm = this.FindForm();
             };
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            if (Width <= 1 || Height <= 1) return;
+            int radius = Math.Min(10, Height / 2);
+            int diameter = radius * 2;
+            Rectangle bounds = ClientRectangle;
+            bounds.Width--;
+            bounds.Height--;
+            using GraphicsPath path = new();
+            path.AddArc(bounds.Left, bounds.Top, diameter, diameter, 180, 90);
+            path.AddArc(bounds.Right - diameter, bounds.Top, diameter, diameter, 270, 90);
+            path.AddArc(bounds.Right - diameter, bounds.Bottom - diameter, diameter, diameter, 0, 90);
+            path.AddArc(bounds.Left, bounds.Bottom - diameter, diameter, diameter, 90, 90);
+            path.CloseFigure();
+            Region = new Region(path);
         }
 
 

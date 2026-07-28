@@ -21,6 +21,11 @@ namespace FileKeywordSearcher
         private Label? txtProgressDetail = null!;
         private Label? txtProgressFileHasKeyWord = null!;
         private Label? txtProgressCurrentFile = null!;
+        private const int InitialVisibleResults = 5;
+        private int? _resultRowHeight;
+        private int _resultPage;
+        private bool _isSearchRunning;
+        private bool _stopRequested;
 
         public Form1()
         {
@@ -29,6 +34,11 @@ namespace FileKeywordSearcher
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             StartPosition = FormStartPosition.CenterScreen;
             Resize += Form1_SizeChanged;
+            ResizeEnd += (_, _) =>
+            {
+                if (!_isSearchRunning && tableLayoutPanel.Visible && fileKeywordSearcher != null)
+                    InitializeTableLayoutResult();
+            };
             SizeChanged += (sender, e) => { UpdateProgressBarWidth(); UpdateProgressBarPosition(); UpdateProgressBarFont(); };
         }
 
@@ -55,6 +65,7 @@ namespace FileKeywordSearcher
                 // Update ProgressBar
                 if (progressBar1 != null)
                 {
+                    progressBar1.IsIndeterminate = false;
                     progressBar1.Value = e.percent;
                     progressBar1.Refresh(); // Ensure ProgressBar updates visually
                     TaskbarManager.Instance.SetProgressValue(e.percent, 100);
@@ -64,12 +75,12 @@ namespace FileKeywordSearcher
                 // Update progress text details
                 if (txtProgressPercent != null)
                 {
-                    txtProgressPercent.Text = e.percent.ToString() + "%";
+                    txtProgressPercent.Text = e.percent + "%";
                 }
 
                 if (txtProgressDetail != null)
                 {
-                    txtProgressDetail.Text = $"{e.iFileCount}/{e.iTotalFileCount}";
+                    txtProgressDetail.Text = $"{e.iFileCount:N0}/{e.iTotalFileCount:N0}";
                 }
 
                 if (txtProgressFileHasKeyWord != null)
@@ -83,103 +94,123 @@ namespace FileKeywordSearcher
                     txtProgressCurrentFile.Height = txtProgressCurrentFile.GetPreferredSize(new Size(txtProgressCurrentFile.Width, int.MaxValue)).Height;
                 }
 
-                // Check if progress is complete (100%)
                 if (e.percent >= 100)
                 {
                     TaskbarManager.Instance.SetProgressState(TaskbarProgressBarState.NoProgress);
-                    // Schedule clearing ProgressBar after a short delay
-                    System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
-                    timer.Interval = 500;
-                    timer.Tick += (s, args) =>
-                    {
-                        timer.Stop();
-
-                        // Clear all progress UI elements
-                        ClearProgressBar();
-
-                        // Optionally unsubscribe from ProgressChanged event to prevent further updates
-                        if (fileKeywordSearcher != null)
-                        {
-                            fileKeywordSearcher.ProgressChanged -= FileProcessor_ProgressChanged;
-                        }
-                    };
-                    timer.Start();
                 }
             });
         }
 
         private async void btnStartSearch_Click_1(object sender, EventArgs e)
         {
-            if (btnStartSearch.Text == "Search")
+            if (_isSearchRunning)
             {
-                if (txtBrowser.Text == "Please select the directory for searching!!!")
-                {
-                    MessageBox.Show("Please select the directory for searching!!!", "Error!!!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    btnBrowser.Focus();
-                    return;
-                }
+                if (_stopRequested) return;
+                _stopRequested = true;
+                btnStartSearch.Enabled = false;
+                btnStartSearch.Text = "Stopping…";
+                cancellationTokenSource.Cancel();
+                TaskbarManager.Instance.SetProgressState(TaskbarProgressBarState.Paused);
+                return;
+            }
 
-                if (!Directory.Exists(txtBrowser.Text))
-                {
-                    MessageBox.Show("The directory is not valid!!!", "Error!!!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    btnBrowser.Focus();
-                    return;
-                }
+            if (txtBrowser.Text == "Please select the directory for searching!!!")
+            {
+                MessageBox.Show("Please select the directory for searching!!!", "Error!!!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                btnBrowser.Focus();
+                return;
+            }
 
-                if (txtKeyWord.Text == "Enter the search keyword!!!")
-                {
-                    MessageBox.Show("Please enter the keyword for the search!!!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    txtKeyWord.Focus();
-                    return;
-                }
+            if (!Directory.Exists(txtBrowser.Text))
+            {
+                MessageBox.Show("The directory is not valid!!!", "Error!!!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                btnBrowser.Focus();
+                return;
+            }
 
-                fileKeywordSearcher = new FileKeywordSearcher(txtBrowser.Text, txtKeyWord.Text, labelWithCheckBoxList.m_SelectedItems);
-                if (!fileKeywordSearcher.getTotalFiles())
-                {
-                    InitializeTableLayoutResult();
-                    return;
-                }
-                ControlsStatus(false);
+            if (txtKeyWord.Text == "Enter the search keyword!!!")
+            {
+                MessageBox.Show("Please enter the keyword for the search!!!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                txtKeyWord.Focus();
+                return;
+            }
+
+            _isSearchRunning = true;
+            _stopRequested = false;
+            cancellationTokenSource = new CancellationTokenSource();
+            fileKeywordSearcher = new FileKeywordSearcher(txtBrowser.Text, txtKeyWord.Text, labelWithCheckBoxList.m_SelectedItems);
+            _resultPage = 0;
+            ControlsStatus(false);
+            emptyStatePanel.Visible = false;
+            tableLayoutPanel.Visible = false;
+            tableLayoutPanel.AutoScroll = false;
+            resultsPagerHost.Visible = false;
+
+            try
+            {
                 if (progressBar1 == null)
                 {
-                    tableLayoutPanel.Controls.Clear();
+                    ClearResultControls();
                     InitializeProgressBarAndFileProcess();
                 }
-                // Show and start ProgressBar
                 if (progressBar1 != null)
                 {
                     progressBar1.Visible = true;
+                    progressBar1.IsIndeterminate = true;
+                }
+                if (txtProgressPercent != null) txtProgressPercent.Text = "Indexing files…";
+                if (txtProgressDetail != null) txtProgressDetail.Text = "Preparing file list";
+                if (txtProgressFileHasKeyWord != null) txtProgressFileHasKeyWord.Text = string.Empty;
+                if (txtProgressCurrentFile != null) txtProgressCurrentFile.Text = txtBrowser.Text;
+                UpdateProgressBarWidth();
+                UpdateProgressBarPosition();
+                UpdateProgressBarFont();
+
+                bool hasFiles = await Task.Run(() => fileKeywordSearcher.getTotalFiles(cancellationTokenSource.Token));
+                if (!hasFiles)
+                {
+                    ClearProgressBar();
+                    MessageBox.Show("No supported files were found in this folder.", "Search complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                if (progressBar1 != null)
+                {
+                    progressBar1.IsIndeterminate = false;
                     progressBar1.Value = 0;
                 }
+                if (txtProgressPercent != null) txtProgressPercent.Text = "0%";
                 UpdateControlSizesAndLocations();
                 UpdateProgressBarWidth();
                 UpdateProgressBarPosition();
                 UpdateProgressBarFont();
 
-                cancellationTokenSource = new CancellationTokenSource();
-
-                try
+                await fileKeywordSearcher.HasKeyWord(cancellationTokenSource.Token);
+                if (!cancellationTokenSource.IsCancellationRequested)
                 {
-                    // Asynchronously call ProcessFiles method
-                    await Task.Run(() => fileKeywordSearcher.HasKeyWord(cancellationTokenSource.Token));
-                }
-                finally
-                {
-                    ControlsStatus(true);
-                    btnStartSearch.Text = "Search";
+                    ClearProgressBar();
+                    ShowSkippedFilesDialog(fileKeywordSearcher.GetSkippedFiles());
                 }
             }
-            else
+            catch (OperationCanceledException)
             {
+                // Cancellation is an expected result of the Stop button.
+            }
+            finally
+            {
+                _isSearchRunning = false;
+                _stopRequested = false;
+                btnStartSearch.Enabled = true;
                 TaskbarManager.Instance.SetProgressState(TaskbarProgressBarState.NoProgress);
-                ClearProgressBar();
-                cancellationTokenSource.Cancel();
+                if (cancellationTokenSource.IsCancellationRequested && progressBar1 != null)
+                    ClearProgressBar();
+                ControlsStatus(true);
                 btnStartSearch.Text = "Search";
             }
         }
 
         private bool InitializeTableLayoutResult()
         {
+            tableLayoutPanel.AutoScroll = false;
             if (fileKeywordSearcher == null)
             {
                 return false;
@@ -188,8 +219,10 @@ namespace FileKeywordSearcher
             List<FileItem> fileItems = fileKeywordSearcher.GetFileItems();
             if (fileItems.Count == 0)
             {
+                resultsPagerHost.Visible = false;
+                resultsContentLayout.RowStyles[1].Height = 0F;
                 // Clear existing controls in the TableLayoutPanel
-                tableLayoutPanel.Controls.Clear();
+                ClearResultControls();
                 tableLayoutPanel.RowStyles.Clear();
                 tableLayoutPanel.RowCount = 1;
                 tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
@@ -212,14 +245,29 @@ namespace FileKeywordSearcher
             }
             int i = 0;
             tableLayoutPanel.RowStyles.Clear();
-            tableLayoutPanel.Controls.Clear();
+            ClearResultControls();
+            tableLayoutPanel.AutoScrollPosition = Point.Empty;
 
             if (fileItems.Count != 0)
             {
                 bIsResult = true;
-                tableLayoutPanel.RowCount = fileItems.Count + 1;
+                int availableHeight = Math.Max(1, resultsContentLayout.ClientSize.Height - 58);
+                _resultRowHeight ??= Math.Max(54, availableHeight / InitialVisibleResults);
+                int resultRowHeight = _resultRowHeight.Value;
+                int resultsPerPage = Math.Max(1, availableHeight / resultRowHeight);
+                int pageCount = (int)Math.Ceiling(fileItems.Count / (double)resultsPerPage);
+                _resultPage = Math.Clamp(_resultPage, 0, pageCount - 1);
+                List<FileItem> visibleItems = fileItems
+                    .Skip(_resultPage * resultsPerPage)
+                    .Take(resultsPerPage)
+                    .ToList();
+                bool showPager = pageCount > 1;
+                // One dedicated flexible row absorbs only the remainder after fitting
+                // as many fixed-height records as possible. This prevents WinForms
+                // from stretching the final record when the window grows.
+                tableLayoutPanel.RowCount = visibleItems.Count + 1;
 
-                foreach (FileItem fileItem in fileItems)
+                foreach (FileItem fileItem in visibleItems)
                 {
                     TableLayoutPanel itemPanel = new()
                     {
@@ -227,12 +275,19 @@ namespace FileKeywordSearcher
                         ColumnCount = 2,
                         RowCount = 1,
                         BackColor = Color.FromArgb(235, 246, 238),
-                        Margin = new Padding(2, 2, 8, 8),
+                        Margin = new Padding(2, 4, 8, 4),
                         Padding = new Padding(12, 8, 8, 8)
                     };
                     itemPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
                     itemPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 96F));
                     itemPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+                    itemPanel.Resize += (_, _) =>
+                    {
+                        if (itemPanel.Width <= 1 || itemPanel.Height <= 1) return;
+                        using System.Drawing.Drawing2D.GraphicsPath rounded = RoundedPanel.RoundedPath(itemPanel.ClientRectangle, 12);
+                        itemPanel.Region?.Dispose();
+                        itemPanel.Region = new Region(rounded);
+                    };
 
                     //RichTextBox
                     string linecode = "";
@@ -304,12 +359,14 @@ namespace FileKeywordSearcher
                     //Button
                     Button button = new()
                     {
-                        Text = "Open" + Environment.NewLine + "Folder",
+                        Text = "Open",
                         Dock = DockStyle.Fill,
                         TextAlign = ContentAlignment.MiddleCenter,
                         ForeColor = Color.FromArgb(45, 91, 59),
                         BackColor = Color.FromArgb(211, 235, 218),
-                        Cursor = Cursors.Hand
+                        Cursor = Cursors.Hand,
+                        Padding = Padding.Empty,
+                        UseCompatibleTextRendering = false
                     };
                     button.FlatAppearance.BorderColor = Color.FromArgb(184, 214, 193);
                     button.FlatStyle = FlatStyle.Flat;
@@ -325,17 +382,101 @@ namespace FileKeywordSearcher
                     itemPanel.Controls.Add(textPanel, 0, 0);
                     itemPanel.Controls.Add(button, 1, 0);
 
-                    tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 78F));
+                    tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, resultRowHeight));
 
                     tableLayoutPanel.Controls.Add(itemPanel, 0, i);
                     i++;
                 }
-                // A flexible spacer consumes unused height; every result remains exactly 78px tall.
                 tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+                if (showPager)
+                {
+                    Panel pager = CreateResultsPager(pageCount, fileItems.Count, resultsPerPage);
+                    resultsPagerHost.Controls.Clear();
+                    resultsPagerHost.Controls.Add(pager);
+                    resultsPagerHost.Visible = true;
+                    resultsContentLayout.RowStyles[1].Height = 58F;
+                }
+                else
+                {
+                    resultsPagerHost.Visible = false;
+                    resultsContentLayout.RowStyles[1].Height = 0F;
+                }
             }
             emptyStatePanel.Visible = false;
             tableLayoutPanel.Visible = true;
             return bIsResult;
+        }
+
+        private Panel CreateResultsPager(int pageCount, int totalResults, int resultsPerPage)
+        {
+            TableLayoutPanel pager = new()
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.FromArgb(244, 250, 245),
+                Padding = new Padding(6, 8, 6, 8),
+                ColumnCount = 3,
+                RowCount = 1,
+                Margin = Padding.Empty
+            };
+            pager.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120F));
+            pager.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            pager.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120F));
+            pager.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            ModernButton previous = new()
+            {
+                Text = "‹  Previous",
+                Enabled = _resultPage > 0,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(4, 0, 8, 0),
+                BackColor = Color.FromArgb(222, 240, 227),
+                ForeColor = Color.FromArgb(55, 100, 69),
+                BorderColor = Color.FromArgb(194, 220, 202),
+                CornerRadius = 17
+            };
+            ModernButton next = new()
+            {
+                Text = "Next  ›",
+                Enabled = _resultPage < pageCount - 1,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(8, 0, 4, 0),
+                BackColor = Color.FromArgb(222, 240, 227),
+                ForeColor = Color.FromArgb(55, 100, 69),
+                BorderColor = Color.FromArgb(194, 220, 202),
+                CornerRadius = 17
+            };
+            Label pageInfo = new()
+            {
+                Dock = DockStyle.Fill,
+                Margin = Padding.Empty,
+                TextAlign = ContentAlignment.MiddleCenter,
+                ForeColor = Color.FromArgb(83, 125, 96),
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Text = $"Showing {_resultPage * resultsPerPage + 1:N0}–{Math.Min((_resultPage + 1) * resultsPerPage, totalResults):N0} of {totalResults:N0}   •   Page {_resultPage + 1}/{pageCount}"
+            };
+            previous.Click += (_, _) => { _resultPage--; tableLayoutPanel.AutoScrollPosition = Point.Empty; InitializeTableLayoutResult(); };
+            next.Click += (_, _) => { _resultPage++; tableLayoutPanel.AutoScrollPosition = Point.Empty; InitializeTableLayoutResult(); };
+            pager.Controls.Add(previous, 0, 0);
+            pager.Controls.Add(pageInfo, 1, 0);
+            pager.Controls.Add(next, 2, 0);
+            return pager;
+        }
+
+        private void ClearResultControls()
+        {
+            resultsPagerHost.Visible = false;
+            resultsContentLayout.RowStyles[1].Height = 0F;
+            while (resultsPagerHost.Controls.Count > 0)
+            {
+                Control pagerControl = resultsPagerHost.Controls[0];
+                resultsPagerHost.Controls.RemoveAt(0);
+                pagerControl.Dispose();
+            }
+            while (tableLayoutPanel.Controls.Count > 0)
+            {
+                Control control = tableLayoutPanel.Controls[0];
+                tableLayoutPanel.Controls.RemoveAt(0);
+                control.Dispose();
+            }
         }
 
         private static void ButtonOpen_Click(object sender, EventArgs e, string filePath)
@@ -375,6 +516,70 @@ namespace FileKeywordSearcher
         private void UpdateControlSizesAndLocations()
         {
             BringToForntControl();
+        }
+
+        private void ShowSkippedFilesDialog(IReadOnlyList<(string FilePath, string Reason)> skippedFiles)
+        {
+            if (skippedFiles.Count == 0) return;
+
+            using Form dialog = new()
+            {
+                Text = $"Skipped files ({skippedFiles.Count})",
+                StartPosition = FormStartPosition.CenterParent,
+                Size = new Size(760, 420),
+                MinimumSize = new Size(560, 320),
+                BackColor = Color.FromArgb(232, 243, 235),
+                ForeColor = Color.FromArgb(43, 74, 55),
+                Font = new Font("Segoe UI", 9F),
+                ShowIcon = false
+            };
+            Label heading = new()
+            {
+                Dock = DockStyle.Top,
+                Height = 58,
+                Padding = new Padding(18, 12, 18, 4),
+                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
+                Text = "Some files could not be scanned and were skipped."
+            };
+            TextBox details = new()
+            {
+                Dock = DockStyle.Fill,
+                Multiline = true,
+                ReadOnly = true,
+                ScrollBars = ScrollBars.Both,
+                WordWrap = false,
+                BackColor = Color.FromArgb(244, 250, 245),
+                ForeColor = Color.FromArgb(55, 100, 69),
+                BorderStyle = BorderStyle.FixedSingle,
+                Text = string.Join(Environment.NewLine + Environment.NewLine,
+                    skippedFiles.Select((item, index) => $"{index + 1}. {item.FilePath}{Environment.NewLine}   Reason: {item.Reason}"))
+            };
+            ModernButton close = new()
+            {
+                Text = "Close",
+                Dock = DockStyle.Right,
+                Width = 110,
+                BackColor = Color.FromArgb(137, 201, 158),
+                ForeColor = Color.FromArgb(28, 73, 43),
+                BorderColor = Color.FromArgb(116, 185, 139),
+                CornerRadius = 10,
+                DialogResult = DialogResult.OK,
+                Margin = new Padding(0, 8, 18, 8)
+            };
+            Panel footer = new()
+            {
+                Dock = DockStyle.Bottom,
+                Height = 58,
+                Padding = new Padding(0, 10, 18, 10),
+                BackColor = Color.FromArgb(232, 243, 235)
+            };
+            footer.Controls.Add(close);
+            dialog.Controls.Add(details);
+            dialog.Controls.Add(heading);
+            dialog.Controls.Add(footer);
+            dialog.AcceptButton = close;
+            dialog.CancelButton = close;
+            dialog.ShowDialog(this);
         }
 
 
@@ -426,6 +631,10 @@ namespace FileKeywordSearcher
         // ProcessBar
         private void InitializeProgressBarAndFileProcess()
         {
+            emptyStatePanel.Visible = false;
+            tableLayoutPanel.Visible = false;
+            tableLayoutPanel.AutoScroll = false;
+            resultsPagerHost.Visible = false;
             // Initialize ProgressBar
             progressBar1 = new ModernProgressBar
             {
@@ -433,7 +642,7 @@ namespace FileKeywordSearcher
                 Maximum = 100,
                 Step = 1,
                 Visible = false,
-                Height = 18,
+                Height = 32,
                 TrackColor = Color.FromArgb(216, 233, 221),
                 ProgressColor = Color.FromArgb(103, 181, 130),
             };
@@ -508,8 +717,8 @@ namespace FileKeywordSearcher
         {
             if (progressBar1 != null && txtProgressPercent != null && txtProgressDetail != null && txtProgressFileHasKeyWord != null && txtProgressCurrentFile != null)
             {
-                progressBar1.Width = Math.Min(ClientRectangle.Width - 96, 1120);
-                progressBar1.Height = 18;
+                progressBar1.Width = Math.Min(ClientRectangle.Width - 120, 1400);
+                progressBar1.Height = 32;
 
                 txtProgressPercent.Width = progressBar1.Width;
                 txtProgressPercent.Height = 38;
@@ -586,6 +795,8 @@ namespace FileKeywordSearcher
 
         private void ClearProgressBar()
         {
+            if (fileKeywordSearcher != null)
+                fileKeywordSearcher.ProgressChanged -= FileProcessor_ProgressChanged;
             if (progressBar1 != null)
             {
                 progressBar1.Visible = false;

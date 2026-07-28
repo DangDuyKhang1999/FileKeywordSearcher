@@ -29,17 +29,12 @@ public class RoundedPanel : Panel
 
     private void DrawLeaves(Graphics graphics)
     {
-        using Pen stemPen = new(Color.FromArgb(48, 86, 151, 105), 2F);
-        using SolidBrush leafBrush = new(Color.FromArgb(42, 91, 169, 116));
-        DrawLeafBranch(graphics, new Point(30, Height - 20), -1, stemPen, leafBrush, 1.55F);
-        DrawLeafBranch(graphics, new Point(Width - 28, 32), 1, stemPen, leafBrush, 1.45F);
-        DrawLeafBranch(graphics, new Point(Width - 34, Height - 18), 1, stemPen, leafBrush, 1.05F);
-        DrawLeafBranch(graphics, new Point(34, 24), -1, stemPen, leafBrush, 0.95F);
-        if (Width > 760)
-        {
-            DrawLeafBranch(graphics, new Point(Width / 2 - 120, Height - 16), 1, stemPen, leafBrush, 0.9F);
-            DrawLeafBranch(graphics, new Point(Width / 2 + 170, 18), -1, stemPen, leafBrush, 0.82F);
-        }
+        using Pen stemPen = new(Color.FromArgb(38, 86, 151, 105), 2F);
+        using SolidBrush leafBrush = new(Color.FromArgb(32, 91, 169, 116));
+        DrawLeafBranch(graphics, new Point(28, Height - 18), -1, stemPen, leafBrush, 1.35F);
+        DrawLeafBranch(graphics, new Point(Width - 26, 28), 1, stemPen, leafBrush, 1.25F);
+        DrawLeafBranch(graphics, new Point(Width - 28, Height - 18), 1, stemPen, leafBrush, 1.05F);
+        DrawLeafBranch(graphics, new Point(28, 22), -1, stemPen, leafBrush, 0.95F);
     }
 
     private static void DrawLeafBranch(Graphics graphics, Point origin, int direction, Pen stemPen, Brush leafBrush, float scale = 1F)
@@ -76,11 +71,19 @@ public class ModernButton : Button
 {
     public int CornerRadius { get; set; } = 10;
     public Color BorderColor { get; set; } = Color.Transparent;
-    public ModernButton() { FlatAppearance.BorderSize = 0; Cursor = Cursors.Hand; }
+    public ModernButton()
+    {
+        FlatStyle = FlatStyle.Flat;
+        FlatAppearance.BorderSize = 0;
+        UseVisualStyleBackColor = false;
+        Cursor = Cursors.Hand;
+        TabStop = false;
+    }
     protected override void OnResize(EventArgs e)
     {
         base.OnResize(e);
         using GraphicsPath path = RoundedPanel.RoundedPath(ClientRectangle, CornerRadius);
+        Region?.Dispose();
         Region = new Region(path);
     }
     protected override void OnPaint(PaintEventArgs e)
@@ -98,6 +101,7 @@ public class ModernProgressBar : Control
     private int _value;
     private int _displayValue;
     private int _shimmerOffset;
+    private bool _isIndeterminate;
     private readonly System.Windows.Forms.Timer _animationTimer;
     public int Minimum { get; set; }
     public int Maximum { get; set; } = 100;
@@ -113,6 +117,16 @@ public class ModernProgressBar : Control
     }
     public Color TrackColor { get; set; } = Color.FromArgb(218, 234, 222);
     public Color ProgressColor { get; set; } = Color.FromArgb(111, 187, 137);
+    public bool IsIndeterminate
+    {
+        get => _isIndeterminate;
+        set
+        {
+            _isIndeterminate = value;
+            if (value && !_animationTimer.Enabled) _animationTimer.Start();
+            Invalidate();
+        }
+    }
 
     public ModernProgressBar()
     {
@@ -126,7 +140,7 @@ public class ModernProgressBar : Control
                 _displayValue += Math.Sign(distance) * Math.Max(1, Math.Abs(distance) / 7);
             _shimmerOffset = (_shimmerOffset + 7) % Math.Max(1, Width + 90);
             Invalidate();
-            if (_displayValue == _value && (_value == Minimum || _value == Maximum))
+            if (!_isIndeterminate && _displayValue == _value && (_value == Minimum || _value == Maximum))
                 _animationTimer.Stop();
         };
     }
@@ -137,6 +151,17 @@ public class ModernProgressBar : Control
         using GraphicsPath trackPath = RoundedPanel.RoundedPath(track, Height / 2);
         using SolidBrush trackBrush = new(TrackColor);
         e.Graphics.FillPath(trackBrush, trackPath);
+        if (_isIndeterminate)
+        {
+            int segmentWidth = Math.Max(80, Width / 4);
+            int segmentX = _shimmerOffset - segmentWidth;
+            Rectangle segment = new(segmentX, 0, segmentWidth, Height - 1);
+            using GraphicsPath segmentPath = RoundedPanel.RoundedPath(segment, Height / 2);
+            using LinearGradientBrush segmentBrush = new(segment, Color.FromArgb(80, ProgressColor), ProgressColor, LinearGradientMode.Horizontal);
+            e.Graphics.FillPath(segmentBrush, segmentPath);
+            return;
+        }
+
         int fillWidth = Maximum <= Minimum ? 0 : (int)((Width - 1) * (_displayValue - Minimum) / (double)(Maximum - Minimum));
         if (fillWidth < 2) return;
         Rectangle fill = new(0, 0, fillWidth, Height - 1);

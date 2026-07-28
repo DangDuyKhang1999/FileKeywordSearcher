@@ -15,7 +15,9 @@ namespace FileKeywordSearcher
             System.ComponentModel.ComponentResourceManager resources = new(typeof(Form1));
             rootLayout = new TableLayoutPanel();
             resultsCard = new RoundedPanel();
+            resultsContentLayout = new TableLayoutPanel();
             tableLayoutPanel = new TableLayoutPanel();
+            resultsPagerHost = new Panel();
             emptyStatePanel = new TableLayoutPanel();
             lblEmptyIcon = new Label();
             lblEmptyTitle = new Label();
@@ -31,6 +33,7 @@ namespace FileKeywordSearcher
             btnStartSearch = new ModernButton();
             rootLayout.SuspendLayout();
             resultsCard.SuspendLayout();
+            resultsContentLayout.SuspendLayout();
             emptyStatePanel.SuspendLayout();
             searchCard.SuspendLayout();
             searchLayout.SuspendLayout();
@@ -53,11 +56,21 @@ namespace FileKeywordSearcher
             resultsCard.ShadowColor = Color.FromArgb(190, 212, 196);
             resultsCard.ShowLeafPattern = true;
             resultsCard.CornerRadius = 22;
-            resultsCard.Controls.Add(tableLayoutPanel);
+            resultsCard.Controls.Add(resultsContentLayout);
             resultsCard.Controls.Add(emptyStatePanel);
             resultsCard.Dock = DockStyle.Fill;
             resultsCard.Margin = new Padding(0, 0, 0, 16);
             resultsCard.Padding = new Padding(14);
+
+            resultsContentLayout.BackColor = Color.Transparent;
+            resultsContentLayout.ColumnCount = 1;
+            resultsContentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            resultsContentLayout.Controls.Add(tableLayoutPanel, 0, 0);
+            resultsContentLayout.Controls.Add(resultsPagerHost, 0, 1);
+            resultsContentLayout.Dock = DockStyle.Fill;
+            resultsContentLayout.RowCount = 2;
+            resultsContentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            resultsContentLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 58F));
 
             tableLayoutPanel.AutoScroll = true;
             tableLayoutPanel.BackColor = Color.Transparent;
@@ -65,6 +78,10 @@ namespace FileKeywordSearcher
             tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             tableLayoutPanel.Dock = DockStyle.Fill;
             tableLayoutPanel.Visible = false;
+
+            resultsPagerHost.BackColor = Color.FromArgb(244, 250, 245);
+            resultsPagerHost.Dock = DockStyle.Fill;
+            resultsPagerHost.Visible = false;
 
             emptyStatePanel.BackColor = Color.Transparent;
             emptyStatePanel.ColumnCount = 1;
@@ -135,10 +152,11 @@ namespace FileKeywordSearcher
             btnStartSearch.BackColor = Color.FromArgb(137, 201, 158); btnStartSearch.BorderColor = Color.FromArgb(116, 185, 139); btnStartSearch.CornerRadius = 11; btnStartSearch.Dock = DockStyle.Fill; btnStartSearch.FlatStyle = FlatStyle.Flat; btnStartSearch.Font = new Font("Segoe UI", 10F, FontStyle.Bold); btnStartSearch.ForeColor = Color.FromArgb(28, 73, 43); btnStartSearch.Margin = new Padding(0, 0, 0, 4); searchLayout.SetRowSpan(btnStartSearch, 3); btnStartSearch.Text = "Search"; btnStartSearch.Click += btnStartSearch_Click_1;
 
             AutoScaleDimensions = new SizeF(8F, 20F); AutoScaleMode = AutoScaleMode.Font; BackColor = Color.FromArgb(232, 243, 235); ClientSize = new Size(980, 680); Controls.Add(rootLayout); DoubleBuffered = true; Font = new Font("Segoe UI", 9F); ForeColor = Color.FromArgb(43, 74, 55); Icon = (Icon)resources.GetObject("$this.Icon"); MinimumSize = new Size(760, 560); Name = "Form1"; Text = "File Search — Local keyword search";
-            rootLayout.ResumeLayout(false); resultsCard.ResumeLayout(false); emptyStatePanel.ResumeLayout(false); searchCard.ResumeLayout(false); searchLayout.ResumeLayout(false); searchLayout.PerformLayout(); ResumeLayout(false);
+            rootLayout.ResumeLayout(false); resultsCard.ResumeLayout(false); resultsContentLayout.ResumeLayout(false); emptyStatePanel.ResumeLayout(false); searchCard.ResumeLayout(false); searchLayout.ResumeLayout(false); searchLayout.PerformLayout(); ResumeLayout(false);
         }
 
-        private TableLayoutPanel rootLayout, searchLayout, tableLayoutPanel, emptyStatePanel;
+        private TableLayoutPanel rootLayout, searchLayout, tableLayoutPanel, emptyStatePanel, resultsContentLayout;
+        private Panel resultsPagerHost;
         private RoundedPanel resultsCard, searchCard;
         private Label lblEmptyIcon, lblEmptyTitle, lblEmptyText, lblKeyword, lblFolder;
         private TextBox txtKeyWord, txtBrowser;
