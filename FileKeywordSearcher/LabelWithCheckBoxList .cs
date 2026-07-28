@@ -22,7 +22,11 @@ namespace FileKeywordSearcher
             _checkedListBox = new CheckedListBox
             {
                 CheckOnClick = true,
-                BackColor = Color.FromArgb(190, 217, 217),
+                BackColor = Color.FromArgb(244, 250, 245),
+                ForeColor = Color.FromArgb(43, 74, 55),
+                BorderStyle = BorderStyle.FixedSingle,
+                Font = new Font("Segoe UI", 9F),
+                IntegralHeight = false
             };
             _checkedListBox.ItemCheck += CheckedListBox_ItemCheck;
 
@@ -31,7 +35,8 @@ namespace FileKeywordSearcher
                 FormBorderStyle = FormBorderStyle.None,
                 StartPosition = FormStartPosition.Manual,
                 ShowInTaskbar = false,
-                AutoSizeMode = AutoSizeMode.GrowOnly
+                AutoSizeMode = AutoSizeMode.GrowOnly,
+                BackColor = Color.FromArgb(244, 250, 245)
             };
             _popupForm.Controls.Add(_checkedListBox);
             _popupForm.Deactivate += PopupForm_Deactivate;

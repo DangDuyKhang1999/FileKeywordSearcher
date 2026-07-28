@@ -16,7 +16,7 @@ namespace FileKeywordSearcher
     {
         private CancellationTokenSource cancellationTokenSource;
         private FileKeywordSearcher fileKeywordSearcher = null!;
-        private ProgressBar? progressBar1 = null!;
+        private ModernProgressBar? progressBar1 = null!;
         private Label? txtProgressPercent = null!;
         private Label? txtProgressDetail = null!;
         private Label? txtProgressFileHasKeyWord = null!;
@@ -35,7 +35,7 @@ namespace FileKeywordSearcher
         private void btnBrowser_Click(object sender, EventArgs e)
         {
             txtBrowser.Text = String.Empty;
-            txtBrowser.ForeColor = Color.Black;
+            txtBrowser.ForeColor = Color.FromArgb(43, 74, 55);
             FolderBrowserDialog folderBrowserDialog = new();
 
             DialogResult result = folderBrowserDialog.ShowDialog();
@@ -190,19 +190,24 @@ namespace FileKeywordSearcher
             {
                 // Clear existing controls in the TableLayoutPanel
                 tableLayoutPanel.Controls.Clear();
+                tableLayoutPanel.RowStyles.Clear();
+                tableLayoutPanel.RowCount = 1;
+                tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
                 // Add a Label with the message
                 Label labelNoResult = new Label();
-                labelNoResult.Text = "Keyword not found in directory!!!";
+                labelNoResult.Text = "No matching files found";
                 labelNoResult.AutoSize = true;
                 labelNoResult.Dock = DockStyle.Fill;
                 labelNoResult.TextAlign = ContentAlignment.MiddleCenter;
 
                 // Set the text color to red and make it bold
-                labelNoResult.ForeColor = Color.Red;
+                labelNoResult.ForeColor = Color.FromArgb(83, 125, 96);
                 labelNoResult.Font = new Font(labelNoResult.Font, FontStyle.Bold);
 
                 tableLayoutPanel.Controls.Add(labelNoResult, 0, 0);
+                emptyStatePanel.Visible = false;
+                tableLayoutPanel.Visible = true;
                 return false;
             }
             int i = 0;
@@ -211,26 +216,23 @@ namespace FileKeywordSearcher
 
             if (fileItems.Count != 0)
             {
-                int rtItemWidth = 0;
-                if (fileItems.Count < 6)
-                {
-                    rtItemWidth = tableLayoutPanel.ClientSize.Width - 88;
-                }
-                else
-                {
-                    rtItemWidth = tableLayoutPanel.ClientSize.Width - 106;
-                }
-
                 bIsResult = true;
+                tableLayoutPanel.RowCount = fileItems.Count + 1;
 
                 foreach (FileItem fileItem in fileItems)
                 {
                     TableLayoutPanel itemPanel = new()
                     {
-                        Size = new Size(tableLayoutPanel.ClientSize.Width, 60),
+                        Dock = DockStyle.Fill,
                         ColumnCount = 2,
-                        BackColor = Color.FromArgb(140, 194, 183)
+                        RowCount = 1,
+                        BackColor = Color.FromArgb(235, 246, 238),
+                        Margin = new Padding(2, 2, 8, 8),
+                        Padding = new Padding(12, 8, 8, 8)
                     };
+                    itemPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+                    itemPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 96F));
+                    itemPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
                     //RichTextBox
                     string linecode = "";
@@ -261,41 +263,55 @@ namespace FileKeywordSearcher
                             break;
                     }
 
-                    RichTextBox rtItem = new()
+                    TableLayoutPanel textPanel = new()
                     {
-                        Size = new Size(rtItemWidth, 54),
-                        Location = new Point(0, 0),
-                        BorderStyle = BorderStyle.None
+                        Dock = DockStyle.Fill,
+                        BackColor = Color.FromArgb(235, 246, 238),
+                        Margin = new Padding(0, 0, 10, 0),
+                        ColumnCount = 1,
+                        RowCount = 2
                     };
+                    textPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+                    textPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 55F));
+                    textPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 45F));
 
-                    Font fontPath = new(rtItem.Font, FontStyle.Bold);
-                    Font fontLine = new(rtItem.Font, FontStyle.Italic);
-
-                    // fontLine for path
-                    rtItem.SelectionStart = rtItem.TextLength;
-                    rtItem.SelectionLength = 0;
-                    rtItem.SelectionFont = fontPath;
-                    rtItem.SelectionColor = Color.FromArgb(162, 87, 114);
-                    rtItem.SelectedText = fileItem.m_strFileName + Environment.NewLine;
-
-                    // fontLine for line
-                    rtItem.SelectionStart = rtItem.TextLength;
-                    rtItem.SelectionLength = 0;
-                    rtItem.SelectionFont = fontLine;
-                    rtItem.SelectionColor = Color.Black;
-                    rtItem.SelectedText = linecode;
+                    Label fileNameLabel = new()
+                    {
+                        AutoEllipsis = true,
+                        Dock = DockStyle.Fill,
+                        Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                        ForeColor = Color.FromArgb(55, 112, 73),
+                        Text = fileItem.m_strFileName,
+                        TextAlign = ContentAlignment.MiddleLeft,
+                        UseMnemonic = false
+                    };
+                    Label locationLabel = new()
+                    {
+                        AutoEllipsis = true,
+                        Dock = DockStyle.Fill,
+                        Font = new Font("Segoe UI", 8.5F, FontStyle.Italic),
+                        ForeColor = Color.FromArgb(100, 129, 109),
+                        Text = linecode.TrimStart(),
+                        TextAlign = ContentAlignment.MiddleLeft,
+                        UseMnemonic = false
+                    };
+                    ToolTip fullPathTip = new() { InitialDelay = 350, AutoPopDelay = 12000 };
+                    fullPathTip.SetToolTip(fileNameLabel, fileItem.m_strFileName);
+                    textPanel.Tag = fullPathTip;
+                    textPanel.Controls.Add(fileNameLabel, 0, 0);
+                    textPanel.Controls.Add(locationLabel, 0, 1);
 
                     //Button
                     Button button = new()
                     {
                         Text = "Open" + Environment.NewLine + "Folder",
-                        Size = new Size(70, 54),
-                        Location = new Point(599, 0),
+                        Dock = DockStyle.Fill,
                         TextAlign = ContentAlignment.MiddleCenter,
-                        ForeColor = Color.Black,
-                        BackColor = Color.White
+                        ForeColor = Color.FromArgb(45, 91, 59),
+                        BackColor = Color.FromArgb(211, 235, 218),
+                        Cursor = Cursors.Hand
                     };
-                    button.FlatAppearance.BorderColor = Color.FromArgb(137, 190, 179);
+                    button.FlatAppearance.BorderColor = Color.FromArgb(184, 214, 193);
                     button.FlatStyle = FlatStyle.Flat;
 
                     button.Click += (sender, e) =>
@@ -306,17 +322,19 @@ namespace FileKeywordSearcher
                         }
                     };
 
-                    itemPanel.Controls.Add(rtItem, 0, 0);
+                    itemPanel.Controls.Add(textPanel, 0, 0);
                     itemPanel.Controls.Add(button, 1, 0);
 
-                    tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent));
+                    tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 78F));
 
                     tableLayoutPanel.Controls.Add(itemPanel, 0, i);
                     i++;
-                    fontPath.Dispose();
-                    fontLine.Dispose();
                 }
+                // A flexible spacer consumes unused height; every result remains exactly 78px tall.
+                tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             }
+            emptyStatePanel.Visible = false;
+            tableLayoutPanel.Visible = true;
             return bIsResult;
         }
 
@@ -356,42 +374,6 @@ namespace FileKeywordSearcher
 
         private void UpdateControlSizesAndLocations()
         {
-            txtBrowser.Width = ClientRectangle.Width - (ClientRectangle.Width - btnBrowser.Location.X + 5);
-            txtBrowser.Height = btnBrowser.Height;
-
-            Point newtxtBrowser = txtBrowser.Location;
-            newtxtBrowser.Y = btnBrowser.Location.Y;
-            newtxtBrowser.X = tableLayoutPanel.Location.X;
-            txtBrowser.Location = newtxtBrowser;
-
-            Point newtxtKeyWord = txtBrowser.Location;
-            newtxtKeyWord.Y = btnStartSearch.Location.Y;
-            newtxtKeyWord.X = tableLayoutPanel.Location.X;
-            txtKeyWord.Location = newtxtKeyWord;
-
-            tableLayoutPanel.Width = ClientRectangle.Width;
-            tableLayoutPanel.Height = ClientRectangle.Height - (btnStartSearch.Height + 9);
-
-            foreach (Control control in tableLayoutPanel.Controls)
-            {
-                if (control is Panel panel)
-                {
-                    panel.Width = tableLayoutPanel.ClientSize.Width;
-
-                    RichTextBox rtb = panel.Controls.OfType<RichTextBox>().FirstOrDefault() ?? new RichTextBox();
-                    Button button = panel.Controls.OfType<Button>().FirstOrDefault() ?? new Button();
-
-                    if (rtb != null && button != null)
-                    {
-                        int newRtbWidth = panel.Width - button.Width - 12;
-
-                        if (newRtbWidth > 0)
-                        {
-                            rtb.Width = newRtbWidth;
-                        }
-                    }
-                }
-            }
             BringToForntControl();
         }
 
@@ -401,7 +383,7 @@ namespace FileKeywordSearcher
             if (txtBrowser.Text == String.Empty)
             {
                 txtBrowser.Text = "Please select the directory for searching!!!";
-                txtBrowser.ForeColor = Color.Red;
+                txtBrowser.ForeColor = Color.FromArgb(111, 137, 119);
             }
         }
 
@@ -410,7 +392,7 @@ namespace FileKeywordSearcher
             if (txtBrowser.Text == "Please select the directory for searching!!!")
             {
                 txtBrowser.Text = String.Empty;
-                txtBrowser.ForeColor = Color.Black;
+                txtBrowser.ForeColor = Color.FromArgb(43, 74, 55);
             }
         }
 
@@ -419,7 +401,7 @@ namespace FileKeywordSearcher
             if (txtKeyWord.Text == "Enter the search keyword!!!")
             {
                 txtKeyWord.Text = String.Empty;
-                txtKeyWord.ForeColor = Color.Black;
+                txtKeyWord.ForeColor = Color.FromArgb(43, 74, 55);
             }
         }
 
@@ -428,7 +410,7 @@ namespace FileKeywordSearcher
             if (txtKeyWord.Text == String.Empty)
             {
                 txtKeyWord.Text = "Enter the search keyword!!!";
-                txtKeyWord.ForeColor = Color.Red;
+                txtKeyWord.ForeColor = Color.FromArgb(111, 137, 119);
             }
         }
 
@@ -445,13 +427,15 @@ namespace FileKeywordSearcher
         private void InitializeProgressBarAndFileProcess()
         {
             // Initialize ProgressBar
-            progressBar1 = new ProgressBar
+            progressBar1 = new ModernProgressBar
             {
                 Minimum = 0,
                 Maximum = 100,
                 Step = 1,
                 Visible = false,
-                Height = ClientRectangle.Height / 15,
+                Height = 18,
+                TrackColor = Color.FromArgb(216, 233, 221),
+                ProgressColor = Color.FromArgb(103, 181, 130),
             };
 
             // Initialize Lable Progress Precent
@@ -461,7 +445,8 @@ namespace FileKeywordSearcher
                 BorderStyle = BorderStyle.None,
                 Height = progressBar1.Height,
                 Width = progressBar1.Width,
-                BackColor = Color.FromArgb(190, 217, 217),
+                BackColor = Color.FromArgb(244, 250, 245),
+                ForeColor = Color.FromArgb(55, 112, 73),
             };
             // Initialize Lable Progress Detail
             txtProgressDetail = new Label
@@ -470,7 +455,8 @@ namespace FileKeywordSearcher
                 BorderStyle = BorderStyle.None,
                 Height = progressBar1.Height,
                 Width = progressBar1.Width,
-                BackColor = Color.FromArgb(190, 217, 217),
+                BackColor = Color.FromArgb(244, 250, 245),
+                ForeColor = Color.FromArgb(83, 125, 96),
             };
 
             // Initialize Lable Result Path
@@ -480,7 +466,8 @@ namespace FileKeywordSearcher
                 BorderStyle = BorderStyle.None,
                 Height = progressBar1.Height,
                 Width = progressBar1.Width,
-                BackColor = Color.FromArgb(190, 217, 217),
+                BackColor = Color.FromArgb(244, 250, 245),
+                ForeColor = Color.FromArgb(83, 125, 96),
             };
 
             // Initialize Lable Current File
@@ -490,7 +477,8 @@ namespace FileKeywordSearcher
                 BorderStyle = BorderStyle.None,
                 Height = progressBar1.Height,
                 Width = progressBar1.Width,
-                BackColor = Color.FromArgb(190, 217, 217),
+                BackColor = Color.FromArgb(244, 250, 245),
+                ForeColor = Color.FromArgb(105, 133, 114),
             };
 
             //Position
@@ -520,20 +508,20 @@ namespace FileKeywordSearcher
         {
             if (progressBar1 != null && txtProgressPercent != null && txtProgressDetail != null && txtProgressFileHasKeyWord != null && txtProgressCurrentFile != null)
             {
-                progressBar1.Width = ClientRectangle.Width - 50;
-                progressBar1.Height = ClientRectangle.Height / 15;
+                progressBar1.Width = Math.Min(ClientRectangle.Width - 96, 1120);
+                progressBar1.Height = 18;
 
                 txtProgressPercent.Width = progressBar1.Width;
-                txtProgressPercent.Height = progressBar1.Height;
+                txtProgressPercent.Height = 38;
 
                 txtProgressDetail.Width = progressBar1.Width / 2;
                 txtProgressDetail.Height = txtProgressDetail.GetPreferredSize(new Size(txtProgressDetail.Width, int.MaxValue)).Height;
 
                 txtProgressFileHasKeyWord.Width = progressBar1.Width / 2;
-                txtProgressFileHasKeyWord.Height = progressBar1.Height + 20;
+                txtProgressFileHasKeyWord.Height = 24;
 
                 txtProgressCurrentFile.Width = progressBar1.Width;
-                txtProgressCurrentFile.Height = progressBar1.Height + progressBar1.Height / 2;
+                txtProgressCurrentFile.Height = 44;
 
             }
         }
@@ -546,10 +534,10 @@ namespace FileKeywordSearcher
                 int progressBarY = (ClientRectangle.Height - progressBarHeight) / 2;
 
                 progressBar1.Location = new Point(progressBarX, progressBarY);
-                txtProgressPercent.Location = new Point(progressBarX, progressBarY - txtProgressPercent.Height - 10);
-                txtProgressDetail.Location = new Point(progressBarX, progressBarY + progressBar1.Height);
-                txtProgressFileHasKeyWord.Location = new Point(progressBarX + progressBar1.Width / 2, progressBarY + progressBar1.Height);
-                txtProgressCurrentFile.Location = new Point(progressBarX, txtProgressDetail.Location.Y + txtProgressDetail.Height);
+                txtProgressPercent.Location = new Point(progressBarX, progressBarY - txtProgressPercent.Height - 14);
+                txtProgressDetail.Location = new Point(progressBarX, progressBarY + progressBar1.Height + 12);
+                txtProgressFileHasKeyWord.Location = new Point(progressBarX + progressBar1.Width / 2, progressBarY + progressBar1.Height + 12);
+                txtProgressCurrentFile.Location = new Point(progressBarX, txtProgressDetail.Location.Y + 28);
             }
         }
 
@@ -557,15 +545,10 @@ namespace FileKeywordSearcher
         {
             if (progressBar1 != null && txtProgressPercent != null && txtProgressDetail != null && txtProgressFileHasKeyWord != null && txtProgressCurrentFile != null)
             {
-                int fontSize = progressBar1.Height / 2;
-                if (fontSize > 0)
-                {
-                    Font font = new Font("Segoe UI", fontSize, FontStyle.Bold, GraphicsUnit.Point);
-                    txtProgressDetail.Font = font;
-                    txtProgressPercent.Font = font;
-                    txtProgressFileHasKeyWord.Font = font;
-                    txtProgressCurrentFile.Font = font;
-                }
+                txtProgressPercent.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
+                txtProgressDetail.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+                txtProgressFileHasKeyWord.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+                txtProgressCurrentFile.Font = new Font("Segoe UI", 8.5F, FontStyle.Regular);
             }
         }
 
@@ -577,10 +560,11 @@ namespace FileKeywordSearcher
                 txtBrowser.Enabled = true;
                 btnBrowser.Enabled = true;
                 labelWithCheckBoxList.Enabled = true;
-                txtKeyWord.BackColor = Color.FromArgb(137, 190, 179);
-                txtBrowser.BackColor = Color.FromArgb(137, 190, 179);
-                btnBrowser.BackColor = Color.FromArgb(137, 190, 179);
-                labelWithCheckBoxList.BackColor = Color.FromArgb(137, 190, 179);
+                txtKeyWord.BackColor = Color.FromArgb(232, 242, 235);
+                txtBrowser.BackColor = Color.FromArgb(232, 242, 235);
+                btnBrowser.BackColor = Color.FromArgb(222, 240, 227);
+                labelWithCheckBoxList.BackColor = Color.FromArgb(218, 238, 224);
+                btnStartSearch.BackColor = Color.FromArgb(137, 201, 158);
                 btnStartSearch.Text = "Search";
             }
             else
@@ -589,13 +573,14 @@ namespace FileKeywordSearcher
                 txtBrowser.Enabled = false;
                 btnBrowser.Enabled = false;
                 labelWithCheckBoxList.Enabled = false;
-                txtKeyWord.BackColor = Color.LightGray;
-                txtBrowser.BackColor = Color.LightGray;
-                btnBrowser.BackColor = Color.LightGray;
+                txtKeyWord.BackColor = Color.FromArgb(224, 233, 226);
+                txtBrowser.BackColor = Color.FromArgb(224, 233, 226);
+                btnBrowser.BackColor = Color.FromArgb(215, 226, 218);
                 btnBrowser.FlatStyle = FlatStyle.Flat;
                 btnBrowser.FlatAppearance.BorderSize = 0;
-                labelWithCheckBoxList.BackColor = Color.LightGray;
-                btnStartSearch.Text = "End";
+                labelWithCheckBoxList.BackColor = Color.FromArgb(215, 226, 218);
+                btnStartSearch.BackColor = Color.FromArgb(238, 170, 160);
+                btnStartSearch.Text = "Stop";
             }
         }
 
